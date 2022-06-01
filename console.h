@@ -2,6 +2,7 @@
 #define CONSOLE_H_
 
 #include "lexer.h"
+#include <stddef.h>
 
 enum ErrorType {
 	NOTE,
@@ -10,9 +11,9 @@ enum ErrorType {
 };
 
 #if defined(__GNUC__) || defined(__clang__)
-	__attribute__((format (printf, 3, 4)))
+	__attribute__((format (printf, 4, 5)))
 #endif
 
-void msg(struct Lexer *lexer, enum ErrorType, const char *fmt, ...);
+void msg(struct Lexer *lexer, enum ErrorType, const char *offset, const char *fmt, ...);
 
 #endif //CONSOLE_H_

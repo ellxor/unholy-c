@@ -9,9 +9,10 @@
 #define RESET	"\e[0m"
 
 
-void msg(struct Lexer *lexer, enum ErrorType type, const char *fmt, ...) {
+void msg(struct Lexer *lexer, enum ErrorType type, const char *offset, const char *fmt, ...) {
 	// print location info
-	printf(WHITE"%s:%d:%d: ", lexer->filename, lexer->line, lexer->col);
+	int column = offset ? lexer->col + (offset - lexer->stream) : lexer->col;
+	printf(WHITE"%s:%d:%d: ", lexer->filename, lexer->line, column);
 
 	// print coloured error type
 	switch (type) {
@@ -32,13 +33,19 @@ void msg(struct Lexer *lexer, enum ErrorType type, const char *fmt, ...) {
 	va_end(args);
 
 	// print context
-	printf("\n%5d | %s\n", lexer->line, lexer->reference);
+	printf("\n%5d | %s\n", lexer->line, lexer->start);
 	printf("      | ");
 
-	int indent = lexer->stream - lexer->reference;
+	int indent = (offset ?: lexer->stream) - lexer->start;
+	int length = offset ? (lexer->stream - offset - 1) : 0;
 
 	for (int i = 0; i < indent; i++) putchar(' ');
-	printf("^\n");
+	putchar('^');
 
-	lexer->errors++;
+	for (int i = 0; i < length; i++) putchar('~');
+	putchar('\n');
+	putchar('\n');
+
+	if (type == ERROR)
+		lexer->errors++;
 }
