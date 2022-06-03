@@ -1,6 +1,7 @@
 #include "string_allocator.h"
 
 #include "bits.h"
+#include "error.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -14,9 +15,8 @@ struct StringAllocator init_string_allocator() {
 	allocator.capacity = DEFAULT_CAPACITY;
 	allocator.mem = malloc(DEFAULT_CAPACITY);
 
-	if (!allocator.mem) {
-		// TODO: throw error
-	}
+	if (!allocator.mem)
+		internal_error();
 
 	allocator.index = 0;
 	return allocator;
@@ -35,10 +35,7 @@ char *store_string(struct StringAllocator *allocator, const char *mem, int lengt
 		allocator->capacity = 0x80000000 >> (__builtin_clz(allocator->capacity) - 1);
 
 		allocator->mem = realloc(allocator->mem, allocator->capacity);
-
-		if (!allocator->mem) {
-			// TODO: throw error
-		}
+		if (!allocator->mem) internal_error();
 	}
 
 	char *string = &allocator->mem[allocator->index];
