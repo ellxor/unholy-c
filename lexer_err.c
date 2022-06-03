@@ -1,5 +1,6 @@
 #include "lexer.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 
 void lexer_err(struct Lexer *lexer, enum LexerErrorType type, const char *offset, const char *fmt, ...) {
@@ -40,5 +41,5 @@ void lexer_err(struct Lexer *lexer, enum LexerErrorType type, const char *offset
 	putchar('\n');
 
 	if (type == ERROR)
-		lexer->errors++;
+		lexer->errors = true;
 }

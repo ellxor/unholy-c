@@ -1,14 +1,17 @@
 #ifndef LEXER_H_
 #define LEXER_H_
 
-#include <stddef.h>
+#include <stdbool.h>
+#include "util/allocator.h"
 #include "util/util.h"
 
 struct Lexer {
 	const char *filename;
 	const char *stream, *start;
 	int line, col;
-	int errors;
+	bool errors;
+
+	struct Allocator *allocator;
 };
 
 static inline
