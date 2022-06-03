@@ -1,22 +1,39 @@
 #include <stdio.h>
 
-#include "console.h"
 #include "lexer.h"
+#include "parser.h"
+#include "tokens.h"
+
+#include "util/allocator.h"
+
+void dump_token(struct Token token) {
+	switch (token.type) {
+		case INT:		printf("INT(%d)\n", token.value); break;
+		case STRING:		printf("STRING(%s)\n", token.text); break;
+		case IDENTIFIER:	printf("IDENT(%s)\n", token.text); break;
+		case PREPROC:		printf("PREPROC(%s)\n", token.text); break;
+
+		case PUNCTUATION:
+			if (token.value > 0xff)
+				printf("PUNC(%d)\n", token.value);
+			else
+				printf("PUNC(`%c`)\n", token.value);
+			break;
+	}
+}
 
 int main() {
-	struct Lexer lexer = {
-		.filename = "<builtin>",
-		.stream = NULL,
-		.start = "\"\\abc\\xff\"",
-		.line = 1,
-		.col = 1,
-		.errors = 0
-	};
+	struct Vec tokens = vec(struct Token);
+	struct Allocator allocator = init_allocator();
 
-	lexer.stream = lexer.start;
+	parse_file("test", &allocator, &tokens);
+	puts("\n!!! PARSING DONE !!!\n");
 
-	char buffer[1024];
-	int x = chop_string(&lexer, buffer);
+	struct Token *buffer = tokens.mem;
+	int count = tokens.length;
 
-	printf("PARSER: %d, `%.*s`\n", x, x, buffer);
+	for (int i = 0; i < count; i++) {
+		struct Token token = buffer[i];
+		dump_token(token);
+	}
 }
