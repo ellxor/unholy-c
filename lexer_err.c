@@ -1,15 +1,8 @@
-#include "console.h"
-#include <stdarg.h>
+#include "lexer.h"
+
 #include <stdio.h>
 
-#define RED	"\e[31;1m"
-#define MAGENTA	"\e[35;1m"
-#define GREY	"\e[90;1m"
-#define WHITE	"\e[97;1m"
-#define RESET	"\e[0m"
-
-
-void msg(struct Lexer *lexer, enum ErrorType type, const char *offset, const char *fmt, ...) {
+void lexer_err(struct Lexer *lexer, enum LexerErrorType type, const char *offset, const char *fmt, ...) {
 	// print location info
 	int column = offset ? lexer->col + (offset - lexer->stream) : lexer->col;
 	printf(WHITE"%s:%d:%d: ", lexer->filename, lexer->line, column);

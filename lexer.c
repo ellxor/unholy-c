@@ -1,5 +1,6 @@
 #include "lexer.h"
-#include "console.h"
+
+#include "util/error.h"
 
 #include <assert.h>
 #include <ctype.h>
@@ -12,7 +13,7 @@ int chop_digit(struct Lexer *lexer) {
 	if ('0' <= c && c <= '9')
 		return chop_next(lexer) - '0';
 
-	msg(lexer, ERROR, NULL, "expected digit, found `%c`", c);
+	lexer_err(lexer, ERROR, NULL, "expected digit, found `%c`", c);
 	return chop_next(lexer);
 }
 
@@ -24,7 +25,7 @@ int chop_hex_digit(struct Lexer *lexer) {
 	else if ('a' <= c && c <= 'f')  return chop_next(lexer) - 'a';
 	else if ('A' <= c && c <= 'F')	return chop_next(lexer) - 'A';
 
-	msg(lexer, ERROR, NULL, "expected hex digit, found `%c`", c);
+	lexer_err(lexer, ERROR, NULL, "expected hex digit, found `%c`", c);
 	return chop_next(lexer);
 }
 
@@ -65,7 +66,7 @@ int chop_int(struct Lexer *lexer) {
 		digits++;
 
 		if (base == 2 && digit >= 2) {
-			msg(lexer, ERROR, lexer->stream - 1, "binary digit is not [01]");
+			lexer_err(lexer, ERROR, lexer->stream - 1, "binary digit is not [01]");
 		}
 
 		result *= base;
@@ -76,12 +77,12 @@ int chop_int(struct Lexer *lexer) {
 	}
 
 	if (digits == 0) {
-		msg(lexer, ERROR, NULL, "expected digits after base specifier");
+		lexer_err(lexer, ERROR, NULL, "expected digits after base specifier");
 	}
 
 	if (overflow) {
-		msg(lexer, WARNING, start, "integer literal overflows int type");
-		msg(lexer, NOTE, start, "integer literal has value of `%d`", result);
+		lexer_err(lexer, WARNING, start, "integer literal overflows int type");
+		lexer_err(lexer, NOTE, start, "integer literal has value of `%d`", result);
 	}
 
 	return result;
@@ -89,8 +90,6 @@ int chop_int(struct Lexer *lexer) {
 
 
 int chop_string(struct Lexer *lexer, char *buffer) {
-	assert(buffer != NULL);
-
 	// keep copy of base string
 	const char *start = lexer->stream;
 	int length = 0;
@@ -102,7 +101,7 @@ int chop_string(struct Lexer *lexer, char *buffer) {
 		char c = chop_next(lexer);
 
 		if (c == '\0') {
-			msg(lexer, ERROR, start, "unterminated string literal");
+			lexer_err(lexer, ERROR, start, "unterminated string literal");
 			return -1;
 		}
 
@@ -121,17 +120,17 @@ int chop_string(struct Lexer *lexer, char *buffer) {
 				case '\\': break;
 
 				// TODO: implement hex/unicode code points
-				case 'x': msg(lexer, ERROR, NULL, "hex code points are not implemented yet!"); break;
-				case 'u': msg(lexer, ERROR, NULL, "unicode code points are not implemented yet!"); break;
-				case 'U': msg(lexer, ERROR, NULL, "unicode code points are not implemented yet!"); break;
+				case 'x': lexer_err(lexer, ERROR, NULL, "hex code points are not implemented yet!"); break;
+				case 'u': lexer_err(lexer, ERROR, NULL, "unicode code points are not implemented yet!"); break;
+				case 'U': lexer_err(lexer, ERROR, NULL, "unicode code points are not implemented yet!"); break;
 
 				case 0:
-					msg(lexer, ERROR, start, "unterminated string literal");
+					lexer_err(lexer, ERROR, start, "unterminated string literal");
 					return -1;
 
 				default:
-					msg(lexer, WARNING, lexer->stream - 1, "invalid escape sequence");
-					msg(lexer, NOTE, lexer->stream - 2, "`\\` character will be ignored");
+					lexer_err(lexer, WARNING, lexer->stream - 1, "invalid escape sequence");
+					lexer_err(lexer, NOTE, lexer->stream - 2, "`\\` character will be ignored");
 					c = escape;
 			}
 		}
@@ -148,7 +147,6 @@ int chop_string(struct Lexer *lexer, char *buffer) {
 
 
 int chop_identifier(struct Lexer *lexer, char *buffer) {
-	assert(buffer != NULL);
 	int length = 0;
 
 	while (isalnum(peek_next(lexer)) || peek_next(lexer) == '_') {
