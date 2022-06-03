@@ -117,6 +117,7 @@ int chop_string(struct Lexer *lexer, char *buffer) {
 				case '"': c = '\"'; break;
 				case '\\': break;
 
+				// TODO: implement hex/unicode code points
 				case 'x': msg(lexer, ERROR, NULL, "hex code points are not implemented yet!"); break;
 				case 'u': msg(lexer, ERROR, NULL, "unicode code points are not implemented yet!"); break;
 				case 'U': msg(lexer, ERROR, NULL, "unicode code points are not implemented yet!"); break;
