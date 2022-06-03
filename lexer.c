@@ -1,6 +1,7 @@
 #include "lexer.h"
 #include "console.h"
 
+#include <assert.h>
 #include <ctype.h>
 #include <stdbool.h>
 
@@ -88,6 +89,8 @@ int chop_int(struct Lexer *lexer) {
 
 
 int chop_string(struct Lexer *lexer, char *buffer) {
+	assert(buffer != NULL);
+
 	// keep copy of base string
 	const char *start = lexer->stream;
 	int length = 0;
@@ -133,7 +136,7 @@ int chop_string(struct Lexer *lexer, char *buffer) {
 			}
 		}
 
-		if (buffer) *buffer++ = c;
+		*buffer++ = c;
 		length++;
 	}
 
@@ -145,11 +148,12 @@ int chop_string(struct Lexer *lexer, char *buffer) {
 
 
 int chop_identifier(struct Lexer *lexer, char *buffer) {
+	assert(buffer != NULL);
 	int length = 0;
 
 	while (isalnum(peek_next(lexer)) || peek_next(lexer) == '_') {
 		char c = chop_next(lexer);
-		if (buffer) *buffer++ = c;
+		*buffer++ = c;
 		length++;
 	}
 
