@@ -4,7 +4,7 @@
 
 #include <assert.h>
 #include <ctype.h>
-#include <stdbool.h>
+#include <stddef.h>
 
 static inline
 int chop_digit(struct Lexer *lexer) {
@@ -81,8 +81,7 @@ int chop_int(struct Lexer *lexer) {
 	}
 
 	if (overflow) {
-		lexer_err(lexer, WARNING, start, "integer literal overflows int type");
-		lexer_err(lexer, NOTE, start, "integer literal has value of `%d`", result);
+		lexer_err(lexer, ERROR, start, "integer literal overflows int type");
 	}
 
 	return result;
