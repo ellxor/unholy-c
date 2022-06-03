@@ -1,4 +1,4 @@
-#include "string_allocator.h"
+#include "allocator.h"
 
 #include "bits.h"
 #include "error.h"
@@ -9,8 +9,8 @@ enum {
 	DEFAULT_CAPACITY = 1 << 16, //65kb
 };
 
-struct StringAllocator init_string_allocator() {
-	struct StringAllocator allocator;
+struct Allocator init_allocator() {
+	struct Allocator allocator;
 
 	allocator.capacity = DEFAULT_CAPACITY;
 	allocator.mem = malloc(DEFAULT_CAPACITY);
@@ -22,13 +22,13 @@ struct StringAllocator init_string_allocator() {
 	return allocator;
 }
 
-void free_string_allocator(struct StringAllocator *allocator) {
+void free_allocator(struct Allocator *allocator) {
 	free(allocator->mem);
 	allocator->capacity = 0;
 	allocator->index = 0;
 }
 
-char *store_string(struct StringAllocator *allocator, const char *mem, int length) {
+char *store_string(struct Allocator *allocator, const char *mem, int length) {
 	if (allocator->capacity - allocator->index <= length) {
 		// capacity = next power of 2 greater than minimum
 		allocator->capacity = allocator->index + length + 1;
