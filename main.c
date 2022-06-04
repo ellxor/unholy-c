@@ -1,8 +1,8 @@
 #include <stdio.h>
 
-#include "lexer.h"
-#include "parser.h"
-#include "tokens.h"
+#include "parser/lexer.h"
+#include "parser/parser.h"
+#include "parser/tokens.h"
 
 #include "util/allocator.h"
 

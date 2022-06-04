@@ -2,8 +2,8 @@
 #define LEXER_H_
 
 #include <stdbool.h>
-#include "util/allocator.h"
-#include "util/util.h"
+#include "../util/allocator.h"
+#include "../util/util.h"
 
 struct Lexer {
 	const char *filename;

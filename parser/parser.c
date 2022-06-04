@@ -2,9 +2,9 @@
 #include "lexer.h"
 #include "tokens.h"
 
-#include "util/allocator.h"
-#include "util/error.h"
-#include "util/vec.h"
+#include "../util/allocator.h"
+#include "../util/error.h"
+#include "../util/vec.h"
 
 #include <ctype.h>
 #include <stdio.h>

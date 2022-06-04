@@ -3,8 +3,8 @@
 
 #include "lexer.h"
 #include "tokens.h"
-#include "util/allocator.h"
-#include "util/vec.h"
+#include "../util/allocator.h"
+#include "../util/vec.h"
 
 void parse_line(struct Lexer *, struct Vec *tokens);
 void parse_file(const char *filename, struct Allocator *, struct Vec *tokens);

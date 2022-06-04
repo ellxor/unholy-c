@@ -1,6 +1,5 @@
 #include "lexer.h"
-
-#include "util/error.h"
+#include "../util/error.h"
 
 #include <assert.h>
 #include <ctype.h>
