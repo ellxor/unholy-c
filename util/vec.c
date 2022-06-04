@@ -1,4 +1,5 @@
 #include "vec.h"
+#include "error.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -16,9 +17,7 @@ struct Vec init_vector(int elem_size) {
 	vec.used = 0;
 
 	vec.mem = malloc(vec.capacity);
-	if (!vec.mem) {
-		// TODO: throw error
-	}
+	if (!vec.mem) internal_error();
 
 	return vec;
 }
@@ -29,7 +28,7 @@ void vec_push(struct Vec *vec, void *elem) {
 		vec->mem = realloc(vec->mem, vec->capacity);
 
 		if (!vec->mem) {
-			// TODO: throw error
+			internal_error();
 		}
 	}
 
