@@ -7,6 +7,7 @@ enum TokenType {
 	STRING,
 	PUNCTUATION,
 	IDENTIFIER,
+	KEYWORD,
 	PREPROC,
 };
 

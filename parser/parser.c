@@ -1,10 +1,13 @@
 #include "parser.h"
+
+#include "keywords.h"
 #include "lexer.h"
 #include "tokens.h"
 
 #include "../util/allocator.h"
 #include "../util/error.h"
 #include "../util/vec.h"
+#include "../util/hash.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -43,7 +46,13 @@ void parse_token(struct Lexer *lexer, struct Vec *tokens) {
 			chop_next(lexer);
 
 			length = chop_identifier(lexer, buffer);
-			token.text = store_string(lexer->allocator, buffer, length);
+			enum PreProcKeyword preproc = parse_keyword(buffer, length, PREPROC);
+
+			if (preproc == -1) {
+				lexer_err(lexer, ERROR, lexer->stream - length, "invalid preprocessor directive");
+			}
+
+			token.value = preproc;
 			break;
 
 		case '0' ... '9':
