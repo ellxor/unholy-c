@@ -36,9 +36,17 @@ void parse_token(struct Lexer *lexer, struct Vec *tokens) {
 	switch (peek_next(lexer)) {
 		case 'a' ... 'z':
 		case 'A' ... 'Z':
-			token.type = IDENTIFIER;
 			length = chop_identifier(lexer, buffer);
-			token.text = store_string(lexer->allocator, buffer, length);
+			enum Keyword keyword = parse_keyword(buffer, length, KEYWORD);
+
+			if (keyword == -1) {
+				token.type = IDENTIFIER;
+				token.text = store_string(lexer->allocator, buffer, length);
+			} else {
+				token.type = KEYWORD;
+				token.value = keyword;
+			}
+
 			break;
 
 		case '#':

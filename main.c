@@ -12,7 +12,7 @@ void dump_token(struct Token token) {
 		case STRING:		printf("STRING(%s)\n", token.text); break;
 		case IDENTIFIER:	printf("IDENT(%s)\n", token.text); break;
 		case PREPROC:		printf("PREPROC(%d)\n", token.value); break;
-		case KEYWORD: printf("not implemented yet!\n"); break;
+		case KEYWORD: 		printf("KEYWORD(%d)\n", token.value); break;
 
 		case PUNCTUATION:
 			if (token.value > 0xff)
