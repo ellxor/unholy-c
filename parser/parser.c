@@ -10,6 +10,7 @@
 #include "../util/hash.h"
 
 #include <ctype.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -95,6 +96,28 @@ void parse_token(struct Lexer *lexer, struct Vec *tokens) {
 				}
 			}
 
+			// handle invalid ascii chars
+			if (token.value <= CHAR_MAX) {
+				switch (token.value) {
+					case 0 ... 0x20:
+					case 127: // DEL
+					case '$':
+					case '@':
+					case '`':
+					case '\\':
+						lexer_err(lexer, ERROR, lexer->stream - 1, "invalid ascii char in source file");
+						break;
+
+					case '_':
+						lexer_err(lexer, ERROR, lexer->stream - 1, "identifiers cannot begin with an underscore");
+						break;
+
+					case '\'':
+						lexer_err(lexer, ERROR, lexer->stream - 1, "digit seperator cannot start integer literal");
+						lexer_err(lexer, NOTE, lexer->stream - 1, "use #char directive instead of quotes");
+					}
+			}
+
 			break;
 	}
 
@@ -146,6 +169,7 @@ void parse_file(const char *filename, struct Allocator *allocator, struct Vec *t
 	// iterate lines
 	while (fgets(buffer, sizeof buffer, file)) {
 		int length = strcspn(buffer, "\n");
+		buffer[length] = 0;
 
 		if (length == MAX_BUFFER_SIZE - 1) {
 			lexer_err(&lexer, ERROR, NULL, "line is too long");
