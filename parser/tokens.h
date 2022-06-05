@@ -36,6 +36,9 @@ enum MultiCharPunctuation {
 	LOGICAL_AND = '&' * '&',
 	LOGICAL_OR  = '|' * '|',
 
+	INCREMENT   = '+' * '+',
+	DECREMENT   = '-' * '-',
+
 	// TODO: add assignment operators (+=, -=, ...)
 };
 
