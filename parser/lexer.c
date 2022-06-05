@@ -54,9 +54,10 @@ int chop_int(struct Lexer *lexer) {
 		}
 	}
 
-	while (isalnum(peek_next(lexer)) || peek_next(lexer) == '\'') {
-		// ignore digit seperator
-		if (peek_next(lexer) == '\'') {
+	enum { DIGIT_SEPERATOR = '\'' };
+
+	while (isalnum(peek_next(lexer)) || peek_next(lexer) == DIGIT_SEPERATOR) {
+		if (peek_next(lexer) == DIGIT_SEPERATOR) {
 			chop_next(lexer);
 			continue;
 		}
@@ -65,7 +66,7 @@ int chop_int(struct Lexer *lexer) {
 		digits++;
 
 		if (base == 2 && digit >= 2) {
-			lexer_err(lexer, ERROR, lexer->stream - 1, "binary digit is not [01]");
+			lexer_err(lexer, ERROR, lexer->stream - 1, "binary digit is not 0 or 1");
 		}
 
 		result *= base;
