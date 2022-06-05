@@ -6,7 +6,7 @@
 #include <string.h>
 
 enum {
-	DEFAULT_CAPACITY = 1 << 16, //65kb
+	DEFAULT_CAPACITY = 1 << 14, //16kb
 };
 
 struct Allocator init_allocator() {
