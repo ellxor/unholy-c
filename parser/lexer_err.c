@@ -5,7 +5,7 @@
 
 void lexer_err(struct Lexer *lexer, enum LexerErrorType type, const char *offset, const char *fmt, ...) {
 	// print location info
-	int column = offset ? lexer->col + (offset - lexer->stream) : lexer->col;
+	int column = offset ? lexer->col - (lexer->stream - offset) : lexer->col;
 	printf(WHITE"%s:%d:%d: ", lexer->filename, lexer->line, column);
 
 	// print coloured error type
