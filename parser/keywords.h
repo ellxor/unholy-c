@@ -6,6 +6,7 @@
 int parse_keyword(const char *in, int length, enum TokenType);
 
 enum Keyword {
+	KEYWORD_NONE = -1,
 	KEYWORD_BREAK,
 	KEYWORD_CASE,
 	KEYWORD_CHAR,
@@ -35,6 +36,7 @@ enum Keyword {
 };
 
 enum PreProcKeyword {
+	PREPROC_NONE = -1,
 	PREPROC_ASSERT,
 	PREPROC_DEFINE,
 	PREPROC_ENDIF,

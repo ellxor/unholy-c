@@ -40,7 +40,7 @@ void parse_token(struct Lexer *lexer, struct Vec *tokens) {
 			length = chop_identifier(lexer, buffer);
 			enum Keyword keyword = parse_keyword(buffer, length, KEYWORD);
 
-			if (keyword == -1) {
+			if (keyword == KEYWORD_NONE) {
 				token.type = IDENTIFIER;
 				token.text = store_string(lexer->allocator, buffer, length);
 			} else {
@@ -57,7 +57,7 @@ void parse_token(struct Lexer *lexer, struct Vec *tokens) {
 			length = chop_identifier(lexer, buffer);
 			enum PreProcKeyword preproc = parse_keyword(buffer, length, PREPROC);
 
-			if (preproc == -1) {
+			if (preproc == PREPROC_NONE) {
 				lexer_err(lexer, ERROR, lexer->stream - length, "invalid preprocessor directive");
 			}
 
