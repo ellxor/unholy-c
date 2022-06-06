@@ -179,6 +179,10 @@ void parse_file(const char *filename, struct Allocator *allocator, struct Vec *t
 			lexer_err(&lexer, WARNING, NULL, "line exceeds %d chars", MAX_LINE_LENGTH);
 		}
 
+		// replace tabs with spaces to align error context
+		for (int i = 0; i < length; i++)
+			if (buffer[i] == '\t') buffer[i] = ' ';
+
 		lexer.stream = lexer.start;
 		parse_line(&lexer, tokens);
 
