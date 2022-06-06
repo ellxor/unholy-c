@@ -22,7 +22,7 @@ enum {
 
 static
 const char multichar[][2] = {
-	"<<", ">>", "==", "!=", "<=", ">=", "&&", "||", "++", "--",
+	"<<", ">>", "==", "!=", "<=", ">=", "&&", "||", "++", "--", "::",
 };
 
 void parse_token(struct Lexer *lexer, struct Vec *tokens) {

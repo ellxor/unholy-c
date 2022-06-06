@@ -39,6 +39,8 @@ enum MultiCharPunctuation {
 	INCREMENT   = '+' * '+',
 	DECREMENT   = '-' * '-',
 
+	SCOPE       = ':' * ':',
+
 	// TODO: add assignment operators (+=, -=, ...)
 };
 
