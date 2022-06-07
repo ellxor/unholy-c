@@ -2,7 +2,7 @@
 
 // murmur2 hash function
 unsigned hash(const char *in, int length) {
-	unsigned digest = length;
+	unsigned digest = 0;
 	enum { shuffle = 0x5bd1e995 };
 
 	for (int i = 0; i < length >> 2; i++) {
