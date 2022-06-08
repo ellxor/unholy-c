@@ -44,6 +44,7 @@ enum LexerErrorType {
 	NOTE, WARNING, ERROR,
 };
 
+// offset is location of error, if NULL, then lexer->col is used instead
 void lexer_err(struct Lexer *lexer, enum LexerErrorType, const char *offset, const char *fmt, ...) PRINTF(4,5);
 
 #endif //LEXER_H_

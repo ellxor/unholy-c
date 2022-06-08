@@ -20,9 +20,9 @@ static inline
 int chop_hex_digit(struct Lexer *lexer) {
 	char c = peek_next(lexer);
 
-	if ('0' <= c && c <= '9')	return chop_next(lexer) - '0';
+	if ('0' <= c && c <= '9')       return chop_next(lexer) - '0';
 	else if ('a' <= c && c <= 'f')  return chop_next(lexer) - 'a';
-	else if ('A' <= c && c <= 'F')	return chop_next(lexer) - 'A';
+	else if ('A' <= c && c <= 'F')  return chop_next(lexer) - 'A';
 
 	lexer_err(lexer, ERROR, NULL, "expected hex digit, found `%c`", c);
 	return chop_next(lexer);
@@ -81,7 +81,7 @@ int chop_int(struct Lexer *lexer) {
 	}
 
 	if (overflow) {
-		lexer_err(lexer, ERROR, start, "integer literal overflows int type");
+		lexer_err(lexer, ERROR, start, "integer constant overflows int type");
 	}
 
 	return result;
@@ -101,7 +101,7 @@ int chop_string(struct Lexer *lexer, char quote, char *buffer) {
 		char c = chop_next(lexer);
 
 		if (c == '\0') {
-			lexer_err(lexer, ERROR, start, "unterminated string literal");
+			lexer_err(lexer, ERROR, start, "unterminated string constant");
 			return -1;
 		}
 
@@ -126,7 +126,7 @@ int chop_string(struct Lexer *lexer, char quote, char *buffer) {
 				case 'U': lexer_err(lexer, ERROR, NULL, "unicode code points are not implemented yet!"); break;
 
 				case 0:
-					lexer_err(lexer, ERROR, start, "unterminated string literal");
+					lexer_err(lexer, ERROR, start, "unterminated string constant");
 					return -1;
 
 				default:

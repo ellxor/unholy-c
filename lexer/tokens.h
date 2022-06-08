@@ -9,7 +9,6 @@ enum TokenType {
 	INT,
 	FLOAT,
 	STRING,
-
 	PUNCTUATION,
 	IDENTIFIER,
 
@@ -85,21 +84,21 @@ struct Token {
 #define multichar_mix(a,b) (((a) + 2*(b) + 16) & 0xff)
 
 enum MultiChar {
-	LEFT_SHIFT  = multichar_mix('<','<') ,
-	RIGHT_SHIFT = multichar_mix('>','>') ,
+	LEFT_SHIFT  = multichar_mix('<','<'),
+	RIGHT_SHIFT = multichar_mix('>','>'),
 
-	EQUAL       = multichar_mix('=','=') ,
-	NOT_EQUAL   = multichar_mix('!','=') ,
-	LESS_EQUAL  = multichar_mix('<','=') ,
-	MORE_EQUAL  = multichar_mix('>','=') ,
+	EQUAL       = multichar_mix('=','='),
+	NOT_EQUAL   = multichar_mix('!','='),
+	LESS_EQUAL  = multichar_mix('<','='),
+	MORE_EQUAL  = multichar_mix('>','='),
 
-	LOGICAL_AND = multichar_mix('&','&') ,
-	LOGICAL_OR  = multichar_mix('|','|') ,
+	LOGICAL_AND = multichar_mix('&','&'),
+	LOGICAL_OR  = multichar_mix('|','|'),
 
-	INCREMENT   = multichar_mix('+','+') ,
-	DECREMENT   = multichar_mix('-','-') ,
+	INCREMENT   = multichar_mix('+','+'),
+	DECREMENT   = multichar_mix('-','-'),
 
-	SCOPE       = multichar_mix(':',':') ,
+	SCOPE       = multichar_mix(':',':'),
 };
 
 #endif

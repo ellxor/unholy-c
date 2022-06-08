@@ -79,7 +79,7 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 			if (length < 0) return; //string error
 
 			if (length > 1) {
-				lexer_err(lexer, ERROR, lexer->stream - length - 2, "character literal is more than 1 character");
+				lexer_err(lexer, ERROR, lexer->stream - length - 2, "character constant is more than 1 character");
 			}
 
 			token.value = *buffer;
