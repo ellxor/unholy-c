@@ -1,7 +1,7 @@
 #include <stdio.h>
 
-#include "parser/lexer.h"
-#include "parser/tokens.h"
+#include "lexer/lexer.h"
+#include "lexer/tokens.h"
 
 #include "util/allocator.h"
 
