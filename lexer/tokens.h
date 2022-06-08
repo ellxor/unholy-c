@@ -6,7 +6,6 @@
 #define PREPROC_COUNT 11
 
 enum TokenType {
-	// literals :: TODO: add floating point literals (and to Token)
 	INT,
 	FLOAT,
 	STRING,
@@ -64,6 +63,7 @@ enum TokenType {
 struct Token {
 	enum TokenType type;
 
+	// data: TODO: add support for floating point literals
 	union { int value, length; };
 	const char *text;
 
@@ -72,22 +72,34 @@ struct Token {
 	int line;
 };
 
-enum Punctuation {
-	LEFT_SHIFT  = '<' * '<',
-	RIGHT_SHIFT = '>' * '>',
+// multi-character punctuation:
+//
+// multi character symbols are hashed using the formula:
+// "ab" => mix('a', 'b')
+//
+// the result of this formula does (and must) fall in the
+// range (128...255) were no other 7-bit ASCII can be
+//
 
-	EQUAL       = '=' * '=',
-	NOT_EQUAL   = '!' * '=',
-	LESS_EQUAL  = '<' * '=',
-	MORE_EQUAL  = '>' * '=',
+// single lea instruction
+#define multichar_mix(a,b) (((a) + 2*(b) + 16) & 0xff)
 
-	LOGICAL_AND = '&' * '&',
-	LOGICAL_OR  = '|' * '|',
+enum MultiChar {
+	LEFT_SHIFT  = multichar_mix('<','<') ,
+	RIGHT_SHIFT = multichar_mix('>','>') ,
 
-	INCREMENT   = '+' * '+',
-	DECREMENT   = '-' * '-',
+	EQUAL       = multichar_mix('=','=') ,
+	NOT_EQUAL   = multichar_mix('!','=') ,
+	LESS_EQUAL  = multichar_mix('<','=') ,
+	MORE_EQUAL  = multichar_mix('>','=') ,
 
-	SCOPE       = ':' * ':',
+	LOGICAL_AND = multichar_mix('&','&') ,
+	LOGICAL_OR  = multichar_mix('|','|') ,
+
+	INCREMENT   = multichar_mix('+','+') ,
+	DECREMENT   = multichar_mix('-','-') ,
+
+	SCOPE       = multichar_mix(':',':') ,
 };
 
 #endif

@@ -77,14 +77,16 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 
 			// handle multi-char punctuation
 			int size = sizeof multichar / sizeof multichar[0];
-			token.value = chop_next(lexer);
 
-			char tmp = peek_next(lexer);
+			char a = chop_next(lexer);
+			char b = peek_next(lexer);
+
+			// store single character temporarily
+			token.value = a;
 
 			for (int i = 0; i < size; i++) {
-				if (multichar[i][0] == token.value &&
-				    multichar[i][1] == tmp) {
-					token.value *= tmp;
+				if (multichar[i][0] == a && multichar[i][1] == b) {
+					token.value = multichar_mix(a,b);
 					chop_next(lexer);
 					break;
 				}
