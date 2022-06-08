@@ -111,6 +111,7 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 					case '\'':
 						lexer_err(lexer, ERROR, lexer->stream - 1, "digit seperator cannot start integer literal");
 						lexer_err(lexer, NOTE, lexer->stream - 1, "use #char directive instead of quotes");
+						break;
 					}
 			}
 
