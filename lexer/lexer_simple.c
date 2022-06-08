@@ -88,15 +88,16 @@ int chop_int(struct Lexer *lexer) {
 }
 
 
-int chop_string(struct Lexer *lexer, char *buffer) {
+int chop_string(struct Lexer *lexer, char quote, char *buffer) {
 	// keep copy of base string
 	const char *start = lexer->stream;
 	int length = 0;
 
 	// strip leading quote
+	assert(peek_next(lexer) == quote);
 	chop_next(lexer);
 
-	while (peek_next(lexer) != '"') {
+	while (peek_next(lexer) != quote) {
 		char c = chop_next(lexer);
 
 		if (c == '\0') {
@@ -109,13 +110,14 @@ int chop_string(struct Lexer *lexer, char *buffer) {
 			char escape = chop_next(lexer);
 
 			switch (escape) {
-				case 'e': c = '\e'; break;
-				case 'f': c = '\f'; break;
-				case 'n': c = '\n'; break;
-				case 'r': c = '\r'; break;
-				case 't': c = '\t'; break;
-				case 'v': c = '\v'; break;
-				case '"': c = '\"'; break;
+				case 'e':  c = '\e'; break;
+				case 'f':  c = '\f'; break;
+				case 'n':  c = '\n'; break;
+				case 'r':  c = '\r'; break;
+				case 't':  c = '\t'; break;
+				case 'v':  c = '\v'; break;
+				case '"':  c = '\"'; break;
+				case '\'': c = '\''; break;
 				case '\\': break;
 
 				// TODO: implement hex/unicode code points
@@ -139,6 +141,7 @@ int chop_string(struct Lexer *lexer, char *buffer) {
 	}
 
 	// strip trailing quote
+	assert(peek_next(lexer) == quote);
 	chop_next(lexer);
 
 	return length;

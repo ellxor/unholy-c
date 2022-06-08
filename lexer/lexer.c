@@ -66,10 +66,23 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 		case '"':
 			token.type = STRING;
 
-			length = chop_string(lexer, buffer);
-			if  (length < 0) return; //string error
+			length = chop_string(lexer, '"', buffer);
+			if (length < 0) return; //string error
 
 			token.text = store_string(lexer->allocator, buffer, length);
+			break;
+
+		case '\'':
+			token.type = INT;
+
+			length = chop_string(lexer, '\'', buffer);
+			if (length < 0) return; //string error
+
+			if (length > 1) {
+				lexer_err(lexer, ERROR, lexer->stream - length - 2, "character literal is more than 1 character");
+			}
+
+			token.value = *buffer;
 			break;
 
 		default:
@@ -106,11 +119,6 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 
 					case '_':
 						lexer_err(lexer, ERROR, lexer->stream - 1, "identifiers cannot begin with an underscore");
-						break;
-
-					case '\'':
-						lexer_err(lexer, ERROR, lexer->stream - 1, "digit seperator cannot start integer literal");
-						lexer_err(lexer, NOTE, lexer->stream - 1, "use #char directive instead of quotes");
 						break;
 					}
 			}

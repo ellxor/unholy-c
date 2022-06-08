@@ -29,7 +29,7 @@ char chop_next(struct Lexer *lexer) {
 
 // lexer_simple.c
 int chop_int(struct Lexer *lexer);
-int chop_string(struct Lexer *lexer, char *buffer);
+int chop_string(struct Lexer *lexer, char quote, char *buffer);
 int chop_identifier(struct Lexer *lexer, char *buffer);
 
 // lexer_keyword.c
