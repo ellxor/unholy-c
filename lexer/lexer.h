@@ -2,7 +2,10 @@
 #define LEXER_H_
 
 #include <stdbool.h>
+
+#include "tokens.h"
 #include "../util/allocator.h"
+#include "../util/vec.h"
 #include "../util/util.h"
 
 struct Lexer {
@@ -24,10 +27,19 @@ char chop_next(struct Lexer *lexer) {
 	return lexer->col++, *lexer->stream++;
 }
 
+// lexer_simple.c
 int chop_int(struct Lexer *lexer);
 int chop_string(struct Lexer *lexer, char *buffer);
 int chop_identifier(struct Lexer *lexer, char *buffer);
 
+// lexer_keyword.c
+enum TokenType lookup_keyword(const char *, int, enum TokenType);
+
+// lexer.c
+void lex_line(struct Lexer *, struct Vec *tokens);
+void lex_file(const char *filename, struct Allocator *, struct Vec *tokens);
+
+// lexer_err.c
 enum LexerErrorType {
 	NOTE, WARNING, ERROR,
 };

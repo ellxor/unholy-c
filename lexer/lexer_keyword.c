@@ -1,4 +1,3 @@
-#include "keywords.h"
 #include "tokens.h"
 
 #include <assert.h>
@@ -12,7 +11,6 @@
 struct KeywordEntry {
 	const char *keyword;
 	int length, id;
-
 	unsigned hash;
 };
 
@@ -68,7 +66,7 @@ struct KeywordEntry preprocs[SIZE] = {
 	[0x31d] = { .keyword = "warning",    .length = 7,   PREPROC_WARNING,    .hash = 0x9a72db1d },
 };
 
-int parse_keyword(const char *in, int length, enum TokenType type) {
+enum TokenType lookup_keyword(const char *in, int length, enum TokenType type) {
 	assert(type == KEYWORD || type == PREPROC);
 
 	struct KeywordEntry *table = (type == KEYWORD) ? keywords : preprocs;
@@ -84,5 +82,5 @@ int parse_keyword(const char *in, int length, enum TokenType type) {
 		}
 	}
 
-	return -1;
+	return (type == KEYWORD) ? KEYWORD_NONE : PREPROC_NONE;
 }

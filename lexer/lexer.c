@@ -1,6 +1,3 @@
-#include "parser.h"
-
-#include "keywords.h"
 #include "lexer.h"
 #include "tokens.h"
 
@@ -25,7 +22,7 @@ const char multichar[][2] = {
 	"<<", ">>", "==", "!=", "<=", ">=", "&&", "||", "++", "--", "::",
 };
 
-void parse_token(struct Lexer *lexer, struct Vec *tokens) {
+void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 	struct Token token = {
 		.filename = lexer->filename,
 		.line = lexer->line,
@@ -38,30 +35,27 @@ void parse_token(struct Lexer *lexer, struct Vec *tokens) {
 		case 'a' ... 'z':
 		case 'A' ... 'Z':
 			length = chop_identifier(lexer, buffer);
-			enum Keyword keyword = parse_keyword(buffer, length, KEYWORD);
+			enum TokenType type = lookup_keyword(buffer, length, KEYWORD);
 
-			if (keyword == KEYWORD_NONE) {
+			if (type == KEYWORD_NONE) {
 				token.type = IDENTIFIER;
 				token.text = store_string(lexer->allocator, buffer, length);
 			} else {
-				token.type = KEYWORD;
-				token.value = keyword;
+				token.type = type;
 			}
 
 			break;
 
 		case '#':
-			token.type = PREPROC;
 			chop_next(lexer);
 
 			length = chop_identifier(lexer, buffer);
-			enum PreProcKeyword preproc = parse_keyword(buffer, length, PREPROC);
+			token.type = lookup_keyword(buffer, length, PREPROC);
 
-			if (preproc == PREPROC_NONE) {
+			if (token.type == PREPROC_NONE) {
 				lexer_err(lexer, ERROR, lexer->stream - length, "invalid preprocessor directive");
 			}
 
-			token.value = preproc;
 			break;
 
 		case '0' ... '9':
@@ -125,7 +119,7 @@ void parse_token(struct Lexer *lexer, struct Vec *tokens) {
 }
 
 
-void parse_line(struct Lexer *lexer, struct Vec *tokens) {
+void lex_line(struct Lexer *lexer, struct Vec *tokens) {
 	while (peek_next(lexer) != '\0') {
 		// skip whitespace
 		if  (isspace(peek_next(lexer))) {
@@ -141,12 +135,12 @@ void parse_line(struct Lexer *lexer, struct Vec *tokens) {
 			return;
 		}
 
-		parse_token(lexer, tokens);
+		chop_token(lexer, tokens);
 	}
 }
 
 
-void parse_file(const char *filename, struct Allocator *allocator, struct Vec *tokens) {
+void lex_file(const char *filename, struct Allocator *allocator, struct Vec *tokens) {
 	// open file for reading
 	FILE *file = fopen(filename, "r");
 
@@ -184,7 +178,7 @@ void parse_file(const char *filename, struct Allocator *allocator, struct Vec *t
 			if (buffer[i] == '\t') buffer[i] = ' ';
 
 		lexer.stream = lexer.start;
-		parse_line(&lexer, tokens);
+		lex_line(&lexer, tokens);
 
 		lexer.line += 1;
 		lexer.col = 1;
