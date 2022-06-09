@@ -19,7 +19,7 @@ enum {
 
 static
 const char multichar[][2] = {
-	"<<", ">>", "==", "!=", "<=", ">=", "&&", "||", "++", "--", "::",
+	"<<", ">>", "==", "!=", "<=", ">=", "&&", "||", "++", "--", "::", "..",
 };
 
 void chop_token(struct Lexer *lexer, struct Vec *tokens) {

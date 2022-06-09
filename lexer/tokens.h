@@ -99,6 +99,7 @@ enum MultiChar {
 	DECREMENT   = multichar_mix('-','-'),
 
 	SCOPE       = multichar_mix(':',':'),
+	RANGE       = multichar_mix('.','.'),
 };
 
 #endif
