@@ -32,6 +32,7 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 	int length;
 
 	switch (peek_next(lexer)) {
+		case '_':
 		case 'a' ... 'z':
 		case 'A' ... 'Z':
 			length = chop_identifier(lexer, buffer);
@@ -85,6 +86,15 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 			token.value = *buffer;
 			break;
 
+		case 0 ... 0x20:
+		case 127: // DEL
+		case '$':
+		case '@':
+		case '`':
+		case '\\':
+			lexer_err(lexer, ERROR, lexer->stream - 1, "invalid ascii char in source file");
+			break;
+
 		default:
 			token.type = PUNCTUATION;
 
@@ -103,24 +113,6 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 					chop_next(lexer);
 					break;
 				}
-			}
-
-			// handle invalid ascii chars
-			if (token.value <= CHAR_MAX) {
-				switch (token.value) {
-					case 0 ... 0x20:
-					case 127: // DEL
-					case '$':
-					case '@':
-					case '`':
-					case '\\':
-						lexer_err(lexer, ERROR, lexer->stream - 1, "invalid ascii char in source file");
-						break;
-
-					case '_':
-						lexer_err(lexer, ERROR, lexer->stream - 1, "identifiers cannot begin with an underscore");
-						break;
-					}
 			}
 
 			break;
