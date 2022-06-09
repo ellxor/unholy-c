@@ -92,7 +92,8 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 		case '@':
 		case '`':
 		case '\\':
-			lexer_err(lexer, ERROR, lexer->stream - 1, "invalid ascii char in source file");
+			lexer_err(lexer, ERROR, NULL, "invalid ascii char in source file");
+			chop_next(lexer);
 			break;
 
 		default:
