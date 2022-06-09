@@ -76,8 +76,8 @@ struct Token {
 // multi character symbols are hashed using the formula:
 // "ab" => mix('a', 'b')
 //
-// the result of this formula does (and must) fall in the
-// range (128...255) were no other 7-bit ASCII can be
+// the result of this formula should be in the range
+// (128...255) were no other 7-bit ASCII can be
 //
 
 // single lea instruction
