@@ -149,8 +149,7 @@ void lex_file(const char *filename, struct Allocator *allocator, struct Vec *tok
 	FILE *file = fopen(filename, "r");
 
 	if (!file) {
-		err("file `%s` not found", filename);
-		goto error;
+		errx("file `%s` not found", filename);
 	}
 
 	// initialise lexer
@@ -188,10 +187,6 @@ void lex_file(const char *filename, struct Allocator *allocator, struct Vec *tok
 		lexer.col = 1;
 	}
 
-	if (!lexer.errors)
-		return;
-
-error:
-	err("too many errors");
-	exit(1);
+	if (lexer.errors)
+		errx("too many errors");
 }
