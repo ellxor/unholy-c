@@ -4,6 +4,7 @@
 #include "lexer/tokens.h"
 
 #include "util/allocator.h"
+#include "util/vec.h"
 
 void dump_token(struct Token token) {
 	switch (token.type) {
@@ -37,4 +38,7 @@ int main() {
 		struct Token token = buffer[i];
 		dump_token(token);
 	}
+
+	vec_free(&tokens);
+	free_allocator(&allocator);
 }
