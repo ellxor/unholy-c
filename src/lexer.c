@@ -1,4 +1,6 @@
 #include "lexer.h"
+
+#include "keywords.h"
 #include "tokens.h"
 
 #include <assert.h>
@@ -18,6 +20,13 @@ enum {
 	MAX_BUFFER_SIZE = 1024,
 	MAX_LINE_LENGTH = 120,
 };
+
+enum LexerErrorType {
+	NOTE, WARNING, ERROR,
+};
+
+// offset is location of error, if NULL, then lexer->col is used instead
+void lexer_err(struct Lexer *lexer, enum LexerErrorType, const char *offset, const char *fmt, ...) PRINTF(4,5);
 
 static
 const char multichar[][2] = {
