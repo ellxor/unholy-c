@@ -81,7 +81,7 @@ struct Token {
 //
 
 // single lea instruction
-#define multichar_mix(a,b) (((a) + 2*(b) + 16) & 0xff)
+#define multichar_mix(a,b) (((a) + 2*(b) + 14) & 0xff)
 
 enum MultiChar {
 	LEFT_SHIFT  = multichar_mix('<','<'),
