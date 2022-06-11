@@ -219,7 +219,7 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 			length = chop_identifier(lexer, buffer);
 			enum TokenType type = lookup_keyword(buffer, length, KEYWORD);
 
-			if (type == KEYWORD_NONE) {
+			if (type == NONE) {
 				token.type = IDENTIFIER;
 				token.text = store_string(lexer->allocator, buffer, length);
 			} else {
@@ -234,7 +234,7 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 			length = chop_identifier(lexer, buffer);
 			token.type = lookup_keyword(buffer, length, PREPROC);
 
-			if (token.type == PREPROC_NONE) {
+			if (token.type == NONE) {
 				lexer_err(lexer, ERROR, lexer->stream - length, "invalid preprocessor directive");
 			}
 

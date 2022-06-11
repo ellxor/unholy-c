@@ -84,5 +84,5 @@ enum TokenType lookup_keyword(const char *in, int length, enum TokenType type) {
 		}
 	}
 
-	return (type == KEYWORD) ? KEYWORD_NONE : PREPROC_NONE;
+	return NONE;
 }
