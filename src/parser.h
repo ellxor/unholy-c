@@ -14,6 +14,6 @@ struct Parser {
 	struct Allocator *allocator;
 };
 
-struct ExprNode *parse_expression(struct Parser *);
+struct ExprNode *parse_expression(struct Parser *, int);
 
 #endif //PARSER_H_

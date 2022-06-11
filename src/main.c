@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "lexer.h"
+#include "parser.h"
 #include "tokens.h"
 #include "util/allocator.h"
 #include "util/vec.h"
@@ -23,6 +24,19 @@ void dump_token(struct Token token) {
 	}
 }
 
+void print_tree(struct ExprNode *node) {
+	if (node->type == TERM) {
+		printf("%d", node->token->value);
+		return;
+	}
+
+	printf("(");
+	print_tree(node->lhs);
+	printf(" %c ", node->token->value);
+	print_tree(node->rhs);
+	printf(")");
+}
+
 int main() {
 	struct Vec tokens = vec(struct Token);
 	struct Allocator allocator = init_allocator();
@@ -37,6 +51,13 @@ int main() {
 		struct Token token = buffer[i];
 		dump_token(token);
 	}
+
+	struct Parser parser = { buffer, count, &allocator };
+	struct ExprNode *root = parse_expression(&parser, -1);
+
+	puts("\nAST DONE !!!\n");
+	print_tree(root);
+	printf("\n\n");
 
 	vec_free(&tokens);
 	free_allocator(&allocator);

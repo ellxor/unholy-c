@@ -1,5 +1,4 @@
-#include "stdio.h"
+3 * 4 + 7 * 5
 
-int main() {
-	return 0b1010;
-}
+// 3 * 4 (+) is <
+// so > op { lhs = current, rhs = recurse }
