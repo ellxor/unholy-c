@@ -1,8 +1,10 @@
+#include "lexer.h"
 #include "tokens.h"
 
 #include <assert.h>
 #include <string.h>
-#include "../util/hash.h"
+
+#include "util/hash.h"
 
 #if !defined(static_assert)
 #define static_assert(cond, msg)

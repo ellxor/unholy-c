@@ -1,8 +1,7 @@
 #include <stdio.h>
 
-#include "lexer/lexer.h"
-#include "lexer/tokens.h"
-
+#include "lexer.h"
+#include "tokens.h"
 #include "util/allocator.h"
 #include "util/vec.h"
 
@@ -28,7 +27,7 @@ int main() {
 	struct Vec tokens = vec(struct Token);
 	struct Allocator allocator = init_allocator();
 
-	lex_file("test", &allocator, &tokens);
+	lex_file("test.c", &allocator, &tokens);
 	puts("\n!!! PARSING DONE !!!\n");
 
 	struct Token *buffer = tokens.mem;
