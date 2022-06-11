@@ -16,7 +16,7 @@ struct Allocator init_allocator() {
 	allocator.mem = malloc(DEFAULT_CAPACITY);
 
 	if (!allocator.mem)
-		internal_error("out of memory: failed to allocate %d bytes", allocator.capacity);
+		errx("out of memory: failed to allocate %d bytes", allocator.capacity);
 
 	allocator.index = 0;
 	return allocator;
@@ -36,7 +36,7 @@ char *store_string(struct Allocator *allocator, const char *mem, int length) {
 		allocator->mem = realloc(allocator->mem, allocator->capacity);
 
 		if (!allocator->mem) {
-			internal_error("out of memory: failed to allocate %d bytes", allocator->capacity);
+			errx("out of memory: failed to allocate %d bytes", allocator->capacity);
 		}
 	}
 

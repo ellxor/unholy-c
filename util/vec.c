@@ -17,7 +17,7 @@ struct Vec init_vector(int elem_size) {
 	vec.used = 0;
 
 	vec.mem = malloc(vec.capacity);
-	if (!vec.mem) internal_error("out of memory: failed to allocate %d bytes", vec.capacity);
+	if (!vec.mem) errx("out of memory: failed to allocate %d bytes", vec.capacity);
 
 	return vec;
 }
@@ -28,7 +28,7 @@ void vec_push(struct Vec *vec, void *elem) {
 		vec->mem = realloc(vec->mem, vec->capacity);
 
 		if (!vec->mem) {
-			internal_error("out of memory: failed to allocate %d bytes", vec->capacity);
+			errx("out of memory: failed to allocate %d bytes", vec->capacity);
 		}
 	}
 
