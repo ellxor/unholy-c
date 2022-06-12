@@ -21,9 +21,8 @@ struct Token *chop_next(struct Parser *parser) {
 
 static
 int precedence[] = {
-	// `;` and `)` always end expressions
+	// `)` always end expressions
 	[')'] = MIN_PRECEDENCE,
-	[';'] = MIN_PRECEDENCE,
 
 	// comma operator
 	[','] = 0,
@@ -54,6 +53,61 @@ int precedence[] = {
 	[SCOPE] = 14,
 };
 
+
+static
+enum ExprNodeType token_typeof(struct Token *token) {
+	if (!token) return 0;
+
+	switch (token->type) {
+		case INT:
+		case FLOAT:
+		case STRING:
+		case IDENTIFIER:
+			return TERM;
+
+		// keyword operators
+		case KEYWORD_SIZEOF: return PRE_UNARY_OP;
+		case KEYWORD_ELSE:   return BINARY_OP;
+
+		// types
+		case KEYWORD_BOOL:
+		case KEYWORD_CHAR:
+		case KEYWORD_INT:
+		case KEYWORD_I8:
+		case KEYWORD_I16:
+		case KEYWORD_I32:
+		case KEYWORD_U8:
+		case KEYWORD_U16:
+		case KEYWORD_U32:
+			return TYPE;
+
+		case PUNCTUATION: switch (token->value) {
+			case '{': case '}':
+			case ';':
+				return 0;
+
+			case '(': return LEFT_PAREN;
+			case ')': return RIGHT_PAREN;
+
+			case '!': case '~':
+				return PRE_UNARY_OP;
+
+			case INC: case DEC:
+				return PRE_UNARY_OP | POST_UNARY_OP;
+
+			case '+': case '-':
+			case '&': case '*':
+				return PRE_UNARY_OP | BINARY_OP;
+
+			default:
+				return BINARY_OP;
+		}
+
+		default:
+			return 0;
+	}
+}
+
 static
 struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 	if (peek_next(parser) == NULL) {
@@ -61,52 +115,44 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 	}
 
 	struct ExprNode *lhs = NULL;
+	enum ExprNodeType type = token_typeof(peek_next(parser));
 
-	if (peek_next(parser)->type == PUNCTUATION) {
-		switch (peek_next(parser)->value) {
-			case '(': {
-				chop_next(parser); // remove (
-				lhs = parse_expression_1(parser, MIN_PRECEDENCE);
-				chop_next(parser); // remove )
-				break;
-			}
+	if (type == LEFT_PAREN) {
+		chop_next(parser); // remove (
+		lhs = parse_expression_1(parser, MIN_PRECEDENCE);
 
-			case INC: case DEC:
-			case '+': case '-':
-			case '~': case '!':
-			case '*': case '&': {
-				struct ExprNode operator = { chop_next(parser), PRE_UNARY_OP, NULL, NULL };
-				operator.rhs = parse_expression_1(parser, precedence[PRE_UNARY_OP]);
-
-				lhs = store_object(parser->allocator, &operator, sizeof operator);
-				break;
-			}
-
-			default:
-				errx("unexpected token type (%c)!", peek_next(parser)->value);
-				break;
+		if (token_typeof(peek_next(parser)) != RIGHT_PAREN) {
+			errx("expected )");
 		}
+
+		chop_next(parser); // remove )
 	}
 
-	else if (peek_next(parser)->type == KEYWORD_SIZEOF) {
+	else if (type & PRE_UNARY_OP) {
 		struct ExprNode operator = { chop_next(parser), PRE_UNARY_OP, NULL, NULL };
 		operator.rhs = parse_expression_1(parser, precedence[PRE_UNARY_OP]);
-
 		lhs = store_object(parser->allocator, &operator, sizeof operator);
 	}
 
-	else {
+	else if (type == TERM) {
 		struct ExprNode term = { chop_next(parser), TERM, NULL, NULL };
 		lhs = store_object(parser->allocator, &term, sizeof term);
 	}
 
-	while (peek_next(parser) != NULL && precedence[peek_next(parser)->value] > min_precedence) {
-		struct Token *op = chop_next(parser);
-		struct ExprNode operator = { op, BINARY_OP, lhs, NULL };
+	else {
+		errx("expected expression!");
+	}
 
-		if (op->value == INC || op->value == DEC) {
-			operator.type = POST_UNARY_OP;
-		} else {
+	// continue parsing binary operators / postfix unary operators
+
+	while ((token_typeof(peek_next(parser)) & (BINARY_OP | POST_UNARY_OP))
+		&& precedence[peek_next(parser)->value] > min_precedence) {
+
+		struct Token *op = chop_next(parser);
+		struct ExprNode operator = { op, token_typeof(op), lhs, NULL };
+		operator.type &= BINARY_OP | POST_UNARY_OP;
+
+		if (operator.type == BINARY_OP) {
 			operator.rhs = parse_expression_1(parser, precedence[op->value]);
 		}
 
