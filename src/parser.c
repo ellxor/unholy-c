@@ -50,8 +50,8 @@ int precedence[] = {
 	[POST_UNARY_OP] = 14,
 };
 
-
-struct ExprNode *parse_expression(struct Parser *parser, int min_precedence) {
+static
+struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 	if (peek_next(parser) == NULL) {
 		errx("expected token!");
 	}
@@ -62,7 +62,7 @@ struct ExprNode *parse_expression(struct Parser *parser, int min_precedence) {
 		switch (peek_next(parser)->value) {
 			case '(': {
 				chop_next(parser); // remove (
-				lhs = parse_expression(parser, MIN_PRECEDENCE);
+				lhs = parse_expression_1(parser, MIN_PRECEDENCE);
 				chop_next(parser); // remove )
 				break;
 			}
@@ -72,7 +72,7 @@ struct ExprNode *parse_expression(struct Parser *parser, int min_precedence) {
 			case '~': case '!':
 			case '*': case '&': {
 				struct ExprNode operator = { chop_next(parser), PRE_UNARY_OP, NULL, NULL };
-				operator.rhs = parse_expression(parser, precedence[PRE_UNARY_OP]);
+				operator.rhs = parse_expression_1(parser, precedence[PRE_UNARY_OP]);
 
 				lhs = store_object(parser->allocator, &operator, sizeof operator);
 				break;
@@ -96,11 +96,16 @@ struct ExprNode *parse_expression(struct Parser *parser, int min_precedence) {
 		if (op->value == INC || op->value == DEC) {
 			operator.type = POST_UNARY_OP;
 		} else {
-			operator.rhs = parse_expression(parser, precedence[op->value]);
+			operator.rhs = parse_expression_1(parser, precedence[op->value]);
 		}
 
 		lhs = store_object(parser->allocator, &operator, sizeof operator);
 	}
 
 	return lhs;
+}
+
+
+struct ExprNode *parse_expression(struct Parser *parser) {
+	return parse_expression_1(parser, MIN_PRECEDENCE);
 }

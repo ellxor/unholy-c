@@ -77,7 +77,7 @@ int main() {
 	}
 
 	struct Parser parser = { buffer, count, &allocator };
-	struct ExprNode *root = parse_expression(&parser, -1);
+	struct ExprNode *root = parse_expression(&parser);
 
 	puts("\nAST DONE !!!\n");
 	print_tree(root);
