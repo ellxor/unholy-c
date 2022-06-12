@@ -84,6 +84,13 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 		}
 	}
 
+	else if (peek_next(parser)->type == KEYWORD_SIZEOF) {
+		struct ExprNode operator = { chop_next(parser), PRE_UNARY_OP, NULL, NULL };
+		operator.rhs = parse_expression_1(parser, precedence[PRE_UNARY_OP]);
+
+		lhs = store_object(parser->allocator, &operator, sizeof operator);
+	}
+
 	else {
 		struct ExprNode term = { chop_next(parser), TERM, NULL, NULL };
 		lhs = store_object(parser->allocator, &term, sizeof term);

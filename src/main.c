@@ -44,7 +44,8 @@ void print_tree(struct ExprNode *node) {
 			break;
 
 		case PRE_UNARY_OP:
-			printf("%c(", node->token->value);
+			if (node->token->type == KEYWORD_SIZEOF) printf("sizeof(");
+			else printf("%c(", node->token->value);
 			print_tree(node->rhs);
 			printf(")");
 			break;
