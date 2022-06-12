@@ -37,7 +37,7 @@ int precedence[] = {
 	[LEQ] = 9,
 	[GEQ] = 9,
 
-	[SHL]  = 10,
+	[SHL] = 10,
 	[SHR] = 10,
 
 	['+'] = 11,
