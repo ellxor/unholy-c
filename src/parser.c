@@ -17,35 +17,29 @@ struct Token *chop_next(struct Parser *parser) {
 	return parser->length--, parser->tokens++;
 }
 
+#define MIN_PRECEDENCE -1
+
 static
 int precedence[] = {
-	[')'] = -1,
+	[')'] = MIN_PRECEDENCE, // ) always ends nested expression
 	[','] = 0,
 
-	[OR]  = 3,
-	[AND] = 4,
+	// logical operators
+	[OR]  = 3, [AND] = 4,
 
-	['|'] = 5,
-	['^'] = 6,
-	['&'] = 7,
+	// bitwise operators
+	['|'] = 5, ['^'] = 6, ['&'] = 7,
 
-	[EQ]  = 8,
-	[NEQ] = 8,
+	// comparsion operators
+	[EQ]  = 8, [NEQ] = 8,
+	['>'] = 9, ['<'] = 9, [LEQ] = 9, [GEQ] = 9,
 
-	['>'] = 9,
-	['<'] = 9,
-	[LEQ] = 9,
-	[GEQ] = 9,
+	// shift operators
+	[SHL] = 10, [SHR] = 10,
 
-	[SHL] = 10,
-	[SHR] = 10,
-
-	['+'] = 11,
-	['-'] = 11,
-
-	['*'] = 12,
-	['/'] = 12,
-	['%'] = 12,
+	// arithmetic operators
+	['+'] = 11, ['-'] = 11,
+	['*'] = 12, ['/'] = 12, ['%'] = 12,
 };
 
 
@@ -58,7 +52,7 @@ struct ExprNode *parse_expression(struct Parser *parser, int min_precedence) {
 
 	if (peek_next(parser)->type == PUNCTUATION && peek_next(parser)->value == '(') {
 		chop_next(parser); // remove (
-		lhs = parse_expression(parser, -1);
+		lhs = parse_expression(parser, MIN_PRECEDENCE);
 		chop_next(parser); // remove )
 	}
 
