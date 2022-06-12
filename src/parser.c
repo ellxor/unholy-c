@@ -48,6 +48,10 @@ int precedence[] = {
 	// unary operators
 	[PRE_UNARY_OP] = 13,
 	[POST_UNARY_OP] = 14,
+
+	// member access
+	['.'] = 14,
+	[SCOPE] = 14,
 };
 
 static
