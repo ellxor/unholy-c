@@ -1,11 +1,15 @@
 #include <stdio.h>
 
+#include "ast.h"
 #include "lexer.h"
 #include "parser.h"
 #include "tokens.h"
+
 #include "util/allocator.h"
+#include "util/error.h"
 #include "util/vec.h"
 
+static
 void dump_token(struct Token token) {
 	switch (token.type) {
 		case INT:		printf("INT(%d)\n", token.value); break;
@@ -24,17 +28,31 @@ void dump_token(struct Token token) {
 	}
 }
 
+static
 void print_tree(struct ExprNode *node) {
-	if (node->type == TERM) {
-		printf("%d", node->token->value);
-		return;
-	}
+	switch (node->type) {
+		case TERM:
+			printf("%d", node->token->value);
+			break;
 
-	printf("(");
-	print_tree(node->lhs);
-	printf(" %c ", node->token->value);
-	print_tree(node->rhs);
-	printf(")");
+		case BINARY_OP:
+			printf("(");
+			print_tree(node->lhs);
+			printf(" %c ", node->token->value);
+			print_tree(node->rhs);
+			printf(")");
+			break;
+
+		case PRE_UNARY_OP:
+			printf("%c(", node->token->value);
+			print_tree(node->rhs);
+			printf(")");
+			break;
+
+		default:
+			errx("unimplemented!");
+			break;
+	}
 }
 
 int main() {

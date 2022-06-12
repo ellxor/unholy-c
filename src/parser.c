@@ -21,7 +21,11 @@ struct Token *chop_next(struct Parser *parser) {
 
 static
 int precedence[] = {
-	[')'] = MIN_PRECEDENCE, // ) always ends nested expression
+	// `;` and `)` always end expressions
+	[')'] = MIN_PRECEDENCE,
+	[';'] = MIN_PRECEDENCE,
+
+	// comma operator
 	[','] = 0,
 
 	// logical operators
@@ -40,6 +44,9 @@ int precedence[] = {
 	// arithmetic operators
 	['+'] = 11, ['-'] = 11,
 	['*'] = 12, ['/'] = 12, ['%'] = 12,
+
+	// pre-unary operators (+,-)
+	[PRE_UNARY_OP] = 13,
 };
 
 
@@ -50,10 +57,30 @@ struct ExprNode *parse_expression(struct Parser *parser, int min_precedence) {
 
 	struct ExprNode *lhs = NULL;
 
-	if (peek_next(parser)->type == PUNCTUATION && peek_next(parser)->value == '(') {
-		chop_next(parser); // remove (
-		lhs = parse_expression(parser, MIN_PRECEDENCE);
-		chop_next(parser); // remove )
+	if (peek_next(parser)->type == PUNCTUATION) {
+		switch (peek_next(parser)->value) {
+			case '(': {
+				chop_next(parser); // remove (
+				lhs = parse_expression(parser, MIN_PRECEDENCE);
+				chop_next(parser); // remove )
+				break;
+			}
+
+			case INC: case DEC:
+			case '+': case '-':
+			case '~': case '!':
+			case '*': case '&': {
+				struct ExprNode operator = { chop_next(parser), PRE_UNARY_OP, NULL, NULL };
+				operator.rhs = parse_expression(parser, precedence[PRE_UNARY_OP]);
+
+				lhs = store_object(parser->allocator, &operator, sizeof operator);
+				break;
+			}
+
+			default:
+				errx("unexpected token type (%c)!", peek_next(parser)->value);
+				break;
+		}
 	}
 
 	else {
