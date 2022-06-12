@@ -21,34 +21,21 @@ struct Token *chop_next(struct Parser *parser) {
 
 static
 int precedence[] = {
-	// `)` always end expressions
-	[')'] = MIN_PRECEDENCE,
-
-	// comma operator
 	[','] = 0,
 
-	// logical operators
 	[OR]  = 3, [AND] = 4,
-
-	// bitwise operators
 	['|'] = 5, ['^'] = 6, ['&'] = 7,
 
-	// comparsion operators
 	[EQ]  = 8, [NEQ] = 8,
 	['>'] = 9, ['<'] = 9, [LEQ] = 9, [GEQ] = 9,
 
-	// shift operators
 	[SHL] = 10, [SHR] = 10,
 
-	// arithmetic operators
 	['+'] = 11, ['-'] = 11,
 	['*'] = 12, ['/'] = 12, ['%'] = 12,
 
-	// unary operators
 	[PRE_UNARY_OP] = 13,
 	[POST_UNARY_OP] = 14,
-
-	// member access
 	['.'] = 14,
 	[SCOPE] = 14,
 };
@@ -69,7 +56,6 @@ enum ExprNodeType token_typeof(struct Token *token) {
 		case KEYWORD_SIZEOF: return PRE_UNARY_OP;
 		case KEYWORD_ELSE:   return BINARY_OP;
 
-		// types
 		case KEYWORD_BOOL:
 		case KEYWORD_CHAR:
 		case KEYWORD_INT:
