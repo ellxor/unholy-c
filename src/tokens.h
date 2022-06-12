@@ -84,22 +84,22 @@ struct Token {
 #define multichar_mix(a,b) (((a) + 2*(b) + 14) & 0xff)
 
 enum MultiChar {
-	LEFT_SHIFT  = multichar_mix('<','<'),
-	RIGHT_SHIFT = multichar_mix('>','>'),
+	SHL = multichar_mix('<','<'),
+	SHR = multichar_mix('>','>'),
 
-	EQUAL       = multichar_mix('=','='),
-	NOT_EQUAL   = multichar_mix('!','='),
-	LESS_EQUAL  = multichar_mix('<','='),
-	MORE_EQUAL  = multichar_mix('>','='),
+	EQ  = multichar_mix('=','='),
+	NEQ = multichar_mix('!','='),
+	LEQ = multichar_mix('<','='),
+	GEQ = multichar_mix('>','='),
 
-	LOGICAL_AND = multichar_mix('&','&'),
-	LOGICAL_OR  = multichar_mix('|','|'),
+	AND = multichar_mix('&','&'),
+	OR  = multichar_mix('|','|'),
 
-	INCREMENT   = multichar_mix('+','+'),
-	DECREMENT   = multichar_mix('-','-'),
+	INC = multichar_mix('+','+'),
+	DEC = multichar_mix('-','-'),
 
-	SCOPE       = multichar_mix(':',':'),
-	RANGE       = multichar_mix('.','.'),
+	SCOPE = multichar_mix(':',':'),
+	RANGE = multichar_mix('.','.'),
 };
 
 #endif

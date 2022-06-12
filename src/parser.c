@@ -17,29 +17,28 @@ struct Token *chop_next(struct Parser *parser) {
 	return parser->length--, parser->tokens++;
 }
 
-
 static
 int precedence[] = {
 	[')'] = -1,
 	[','] = 0,
 
-	[LOGICAL_OR]  = 3,
-	[LOGICAL_AND] = 4,
+	[OR]  = 3,
+	[AND] = 4,
 
 	['|'] = 5,
 	['^'] = 6,
 	['&'] = 7,
 
-	[EQUAL] = 8,
-	[NOT_EQUAL] = 8,
+	[EQ]  = 8,
+	[NEQ] = 8,
 
 	['>'] = 9,
 	['<'] = 9,
-	[LESS_EQUAL] = 9,
-	[MORE_EQUAL] = 9,
+	[LEQ] = 9,
+	[GEQ] = 9,
 
-	[LEFT_SHIFT]  = 10,
-	[RIGHT_SHIFT] = 10,
+	[SHL]  = 10,
+	[SHR] = 10,
 
 	['+'] = 11,
 	['-'] = 11,
