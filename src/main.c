@@ -49,6 +49,12 @@ void print_tree(struct ExprNode *node) {
 			printf(")");
 			break;
 
+		case POST_UNARY_OP:
+			printf("( ");
+			print_tree(node->lhs);
+			printf(" %c )", node->token->value);
+			break;
+
 		default:
 			errx("unimplemented!");
 			break;

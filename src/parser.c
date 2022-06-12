@@ -45,8 +45,9 @@ int precedence[] = {
 	['+'] = 11, ['-'] = 11,
 	['*'] = 12, ['/'] = 12, ['%'] = 12,
 
-	// pre-unary operators (+,-)
+	// unary operators
 	[PRE_UNARY_OP] = 13,
+	[POST_UNARY_OP] = 14,
 };
 
 
@@ -90,9 +91,13 @@ struct ExprNode *parse_expression(struct Parser *parser, int min_precedence) {
 
 	while (peek_next(parser) != NULL && precedence[peek_next(parser)->value] > min_precedence) {
 		struct Token *op = chop_next(parser);
-
 		struct ExprNode operator = { op, BINARY_OP, lhs, NULL };
-		operator.rhs = parse_expression(parser, precedence[op->value]);
+
+		if (op->value == INC || op->value == DEC) {
+			operator.type = POST_UNARY_OP;
+		} else {
+			operator.rhs = parse_expression(parser, precedence[op->value]);
+		}
 
 		lhs = store_object(parser->allocator, &operator, sizeof operator);
 	}
