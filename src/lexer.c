@@ -107,7 +107,7 @@ int chop_int(struct Lexer *lexer) {
 		digits++;
 
 		if (base == 2 && digit >= 2) {
-			lexer_err(lexer, ERROR, lexer->stream - 1, "binary digit is not 0 or 1");
+			lexer_err(lexer, ERROR, lexer->stream - 1, "binary digit `%c` is not 0 or 1", '0' + digit);
 		}
 
 		result *= base;
@@ -122,7 +122,8 @@ int chop_int(struct Lexer *lexer) {
 	}
 
 	if (overflow) {
-		lexer_err(lexer, ERROR, start, "integer constant overflows int type");
+		int length = lexer->stream - start;
+		lexer_err(lexer, ERROR, start, "integer constant overflows int type: `%.*s`", length, start);
 	}
 
 	return result;
@@ -171,7 +172,7 @@ int chop_string(struct Lexer *lexer, char quote, char *buffer) {
 					return -1;
 
 				default:
-					lexer_err(lexer, WARNING, lexer->stream - 1, "invalid escape sequence");
+					lexer_err(lexer, WARNING, lexer->stream - 1, "invalid escape sequence `%c`", escape);
 					lexer_err(lexer, NOTE, lexer->stream - 2, "`\\` character will be ignored");
 					c = escape;
 			}
@@ -275,7 +276,12 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 		case '@':
 		case '`':
 		case '\\':
-			lexer_err(lexer, ERROR, NULL, "invalid ascii char in source file");
+			if (isprint(peek_next(lexer))) {
+				lexer_err(lexer, ERROR, NULL, "invalid ascii char `%c` in source file", peek_next(lexer));
+			} else {
+				lexer_err(lexer, ERROR, NULL, "invalid ascii char (%d) in source file", peek_next(lexer));
+			}
+
 			chop_next(lexer);
 			break;
 
@@ -360,8 +366,8 @@ void lex_file(const char *filename, struct Allocator *allocator, struct Vec *tok
 		}
 
 		// replace tabs with spaces to align error context
-		for (int i = 0; i < length; i++)
-			if (buffer[i] == '\t') buffer[i] = ' ';
+		//for (int i = 0; i < length; i++)
+		//	if (buffer[i] == '\t') buffer[i] = ' ';
 
 		lexer.stream = lexer.start;
 		lex_line(&lexer, tokens);
@@ -405,16 +411,16 @@ void lexer_err(struct Lexer *lexer, enum LexerErrorType type, const char *offset
 	va_end(args);
 
 	// print context
-	printf("\n%5d | %s\n", lexer->line, lexer->start);
-	printf("      | ");
+	//printf("\n%5d | %s\n", lexer->line, lexer->start);
+	//printf("      | ");
 
-	int indent = (offset ?: lexer->stream) - lexer->start;
-	int length = offset ? (lexer->stream - offset - 1) : 0;
+	//int indent = (offset ?: lexer->stream) - lexer->start;
+	//int length = offset ? (lexer->stream - offset - 1) : 0;
 
-	for (int i = 0; i < indent; i++) putchar(' ');
-	putchar('^');
+	//for (int i = 0; i < indent; i++) putchar(' ');
+	//putchar('^');
 
-	for (int i = 0; i < length; i++) putchar('~');
-	putchar('\n');
+	//for (int i = 0; i < length; i++) putchar('~');
+	//putchar('\n');
 	putchar('\n');
 }
