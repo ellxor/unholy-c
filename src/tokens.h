@@ -68,7 +68,7 @@ struct Token {
 
 	// location reference
 	const char *filename;
-	int line;
+	int line, col;
 };
 
 // multi-character punctuation:

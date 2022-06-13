@@ -207,6 +207,7 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 	struct Token token = {
 		.filename = lexer->filename,
 		.line = lexer->line,
+		.col  = lexer->col,
 	};
 
 	char buffer[MAX_BUFFER_SIZE];
