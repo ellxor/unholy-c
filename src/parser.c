@@ -4,8 +4,14 @@
 #include "tokens.h"
 #include "util/allocator.h"
 #include "util/error.h"
+#include "util/util.h"
 
+#include <stdarg.h>
+#include <stdio.h>
 #include <stddef.h>
+
+// if offset is NULL, use current token instead
+void parser_err(struct Parser *, const char *fmt, ...) PRINTF(2,3);
 
 static inline
 struct Token *peek_next(struct Parser *parser) {
@@ -132,21 +138,21 @@ struct ExprNode *parse_type(struct Parser *parser) {
 static
 struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 	if (peek_next(parser) == NULL) {
-		errx("expected token!");
+		parser_err(parser, "expected expression");
 	}
 
 	struct ExprNode *lhs = NULL;
 	enum ExprNodeType type = token_typeof(peek_next(parser));
 
 	if (type & LEFT_PAREN) {
-		chop_next(parser); // remove (
+		struct Token *reference = chop_next(parser); // remove (
 
 		// check if type cast
 		if (token_typeof(peek_next(parser)) == TYPE) {
 			lhs = parse_type(parser);
 
 			if (token_typeof(peek_next(parser)) != RIGHT_PAREN) {
-				errx("expected )");
+				parser_err(parser, "expected )");
 			}
 
 			chop_next(parser); // remove )
@@ -158,7 +164,7 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 			lhs = parse_expression_1(parser, MIN_PRECEDENCE);
 
 			if (token_typeof(peek_next(parser)) != RIGHT_PAREN) {
-				errx("expected )");
+				parser_err(parser, "expected )");
 			}
 
 			chop_next(parser); // remove )
@@ -194,7 +200,11 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 	}
 
 	else {
-		errx("expected expression! (got %d)", type);
+		parser_err(parser, "expected expression");
+
+		if (type == TYPE) {
+			parser_err(parser, "type must be in paretheses for type cast or sizeof");
+		}
 	}
 
 	// continue parsing binary operators / postfix unary operators
@@ -216,7 +226,7 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 			// function call
 			if (operator.token->value == '(') {
 				if (token_typeof(peek_next(parser)) != RIGHT_PAREN) {
-					errx("expected )");
+					parser_err(parser, "expected )");
 				}
 
 				chop_next(parser); // remove )
@@ -225,7 +235,7 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 			// array subscripting
 			if (operator.token->value == '[') {
 				if (token_typeof(peek_next(parser)) != SQUARE_PAREN) {
-					errx("expected ]");
+					parser_err(parser, "expected ]");
 				}
 
 				chop_next(parser); // remove ]
@@ -241,4 +251,27 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 
 struct ExprNode *parse_expression(struct Parser *parser) {
 	return parse_expression_1(parser, MIN_PRECEDENCE);
+}
+
+
+void parser_err(struct Parser *parser, const char *fmt, ...) {
+	struct Token *token = parser->length ? parser->tokens : NULL;
+
+	if (token == NULL) {
+		struct Token *last = parser->tokens - 1;
+		printf(WHITE "%s:%d: ", last->filename, last->line + 1);
+	} else {
+		printf(WHITE "%s:%d:%d: ", token->filename, token->line, token->col);
+	}
+
+	printf(RED "error: " RESET);
+	parser->errors = true;
+
+	va_list args;
+	va_start(args, fmt);
+
+	vprintf(fmt, args);
+	va_end(args);
+
+	putchar('\n');
 }

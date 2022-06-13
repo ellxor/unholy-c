@@ -7,11 +7,14 @@
 #include "util/allocator.h"
 #include "util/vec.h"
 
+#include <stdbool.h>
+
 struct Parser {
 	struct Token *tokens;
 	int length;
 
 	struct Allocator *allocator;
+	bool errors;
 };
 
 struct ExprNode *parse_expression(struct Parser *);
