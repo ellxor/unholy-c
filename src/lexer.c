@@ -384,14 +384,18 @@ void lexer_err(struct Lexer *lexer, enum LexerErrorType type, const char *offset
 
 	// print coloured error type
 	switch (type) {
-		case NOTE:	printf(GREY "note: " RESET);
-				break;
+		case NOTE:
+			printf(GREY "note: " RESET);
+			break;
 
-		case WARNING:	printf(MAGENTA "warning: " RESET);
-				break;
+		case WARNING:
+			printf(MAGENTA "warning: " RESET);
+			break;
 
-		case ERROR:	printf(RED "error: " RESET);
-				break;
+		case ERROR:
+			printf(RED "error: " RESET);
+			lexer->errors = true;
+			break;
 	}
 
 	// print message
@@ -413,7 +417,4 @@ void lexer_err(struct Lexer *lexer, enum LexerErrorType type, const char *offset
 	for (int i = 0; i < length; i++) putchar('~');
 	putchar('\n');
 	putchar('\n');
-
-	if (type == ERROR)
-		lexer->errors = true;
 }
