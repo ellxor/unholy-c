@@ -221,6 +221,7 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 
 			if (type == NONE) {
 				token.type = IDENTIFIER;
+				token.length = length;
 				token.text = store_string(lexer->allocator, buffer, length);
 			} else {
 				token.type = type;
