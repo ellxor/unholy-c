@@ -63,6 +63,8 @@ void print_tree(struct ExprNode *node) {
 	switch (node->type) {
 		case TERM:
 			if (node->token->type == IDENTIFIER) printf("%s", node->token->text);
+			else if (node->token->type == KEYWORD_FALSE) printf("false");
+			else if (node->token->type == KEYWORD_TRUE)  printf("true");
 			else printf("%d", node->token->value);
 			break;
 

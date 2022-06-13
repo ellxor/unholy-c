@@ -60,6 +60,8 @@ enum ExprNodeType token_typeof(struct Token *token) {
 		case FLOAT:
 		case STRING:
 		case IDENTIFIER:
+		case KEYWORD_FALSE:
+		case KEYWORD_TRUE:
 			return TERM;
 
 		// keyword operators
