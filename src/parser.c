@@ -13,6 +13,11 @@ struct Token *peek_next(struct Parser *parser) {
 }
 
 static inline
+struct Token *peek_next2(struct Parser *parser) {
+	return parser->length > 1 ? parser->tokens + 1 : NULL;
+}
+
+static inline
 struct Token *chop_next(struct Parser *parser) {
 	return parser->length--, parser->tokens++;
 }
@@ -160,7 +165,23 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 
 	else if (type & PRE_UNARY_OP) {
 		struct ExprNode operator = { chop_next(parser), PRE_UNARY_OP, NULL, NULL };
-		operator.rhs = parse_expression_1(parser, precedence[PRE_UNARY_OP]);
+
+		// special `sizeof (type)` case:
+		// note: argument to sizeof cannot be type cast
+		if (token_typeof(peek_next(parser)) & LEFT_PAREN &&
+		    token_typeof(peek_next2(parser)) == TYPE) {
+
+			chop_next(parser); // remove (
+			struct ExprNode *type = parse_type(parser);
+			chop_next(parser); // remove )
+
+			operator.rhs = type;
+		}
+
+		else {
+			operator.rhs = parse_expression_1(parser, precedence[PRE_UNARY_OP]);
+		}
+
 		lhs = store_object(parser->allocator, &operator, sizeof operator);
 	}
 
