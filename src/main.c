@@ -69,7 +69,8 @@ void print_tree(struct ExprNode *node) {
 		case BINARY_OP:
 			printf("(");
 			print_tree(node->lhs);
-			printf(" %c ", node->token->value);
+			if (node->token->type == KEYWORD_ELSE) printf(" else ");
+			else printf(" %c ", node->token->value);
 			print_tree(node->rhs);
 			printf(")");
 			break;
@@ -93,14 +94,6 @@ void print_tree(struct ExprNode *node) {
 			printf(" ( ");
 			print_tree(node->rhs);
 			printf(" ))");
-			break;
-
-		case SCOPE_CLASS:
-			printf("( ");
-			print_type(node->lhs);
-			printf("::");
-			print_tree(node->rhs);
-			printf(" )");
 			break;
 
 		default:

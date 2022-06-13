@@ -13,7 +13,6 @@ enum ExprNodeType {
 	LEFT_PAREN    = 0x20,
 	RIGHT_PAREN   = 0x40,
 	SQUARE_PAREN  = 0x80,
-	SCOPE_CLASS   = 0x100,
 };
 
 struct ExprNode {

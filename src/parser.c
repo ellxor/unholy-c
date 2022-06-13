@@ -85,9 +85,6 @@ enum ExprNodeType token_typeof(struct Token *token) {
 			case '[': return BINARY_OP;
 			case ']': return SQUARE_PAREN;
 
-			// intrinsic functions
-			case SCOPE: return SCOPE_CLASS;
-
 			case '!': case '~':
 
 				return PRE_UNARY_OP;
@@ -165,27 +162,6 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 		struct ExprNode operator = { chop_next(parser), PRE_UNARY_OP, NULL, NULL };
 		operator.rhs = parse_expression_1(parser, precedence[PRE_UNARY_OP]);
 		lhs = store_object(parser->allocator, &operator, sizeof operator);
-	}
-
-	else if (type == TYPE) {
-		struct ExprNode typeclass = { chop_next(parser), TERM, NULL, NULL };
-
-		if (token_typeof(peek_next(parser)) != SCOPE_CLASS) {
-			errx("expected ::");
-		}
-
-		struct ExprNode scope = { chop_next(parser), SCOPE_CLASS, NULL, NULL };
-
-		if (peek_next(parser) == NULL || peek_next(parser)->type != IDENTIFIER) {
-			errx("expected identifier");
-		}
-
-		struct ExprNode member = { chop_next(parser), TERM, NULL, NULL };
-
-		scope.lhs = store_object(parser->allocator, &typeclass, sizeof typeclass);
-		scope.rhs = store_object(parser->allocator, &member, sizeof member);
-
-		lhs = store_object(parser->allocator, &scope, sizeof scope);
 	}
 
 	else if (type == TERM) {

@@ -98,7 +98,6 @@ enum MultiChar {
 	INC = multichar_mix('+','+'),
 	DEC = multichar_mix('-','-'),
 
-	SCOPE = multichar_mix(':',':'),
 	RANGE = multichar_mix('.','.'),
 };
 
