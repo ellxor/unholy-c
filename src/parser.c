@@ -187,6 +187,11 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 			operator.rhs = type;
 		}
 
+		else if (operator.token->type == KEYWORD_SIZEOF &&
+		         token_typeof(peek_next(parser)) == TYPE) {
+			parser_err(parser, "expected parentheses around type name in sizeof expression");
+		}
+
 		else {
 			operator.rhs = parse_expression_1(parser, precedence[PRE_UNARY_OP]);
 		}
@@ -201,10 +206,6 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 
 	else {
 		parser_err(parser, "expected expression");
-
-		if (type == TYPE) {
-			parser_err(parser, "type must be in paretheses for type cast or sizeof");
-		}
 	}
 
 	// continue parsing binary operators / postfix unary operators
