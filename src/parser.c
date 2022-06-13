@@ -65,6 +65,7 @@ enum ExprNodeType token_typeof(struct Token *token) {
 		case KEYWORD_U8:
 		case KEYWORD_U16:
 		case KEYWORD_U32:
+		case KEYWORD_VOID:
 			return TYPE;
 
 		case PUNCTUATION: switch (token->value) {
@@ -94,6 +95,23 @@ enum ExprNodeType token_typeof(struct Token *token) {
 	}
 }
 
+
+static
+struct ExprNode *parse_type(struct Parser *parser) {
+	struct Token *raw_type = chop_next(parser);
+	raw_type->pointers = 0;
+
+	while (peek_next(parser) && peek_next(parser)->type == PUNCTUATION
+	                         && peek_next(parser)->value == '*') {
+		chop_next(parser);
+		raw_type->pointers++;
+	}
+
+	struct ExprNode type = { raw_type, TYPE, NULL, NULL };
+	return store_object(parser->allocator, &type, sizeof type);
+}
+
+
 static
 struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 	if (peek_next(parser) == NULL) {
@@ -105,13 +123,29 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 
 	if (type == LEFT_PAREN) {
 		chop_next(parser); // remove (
-		lhs = parse_expression_1(parser, MIN_PRECEDENCE);
 
-		if (token_typeof(peek_next(parser)) != RIGHT_PAREN) {
-			errx("expected )");
+		// check if type cast
+		if (token_typeof(peek_next(parser)) == TYPE) {
+			lhs = parse_type(parser);
+
+			if (token_typeof(peek_next(parser)) != RIGHT_PAREN) {
+				errx("expected )");
+			}
+
+			chop_next(parser); // remove )
+			lhs->rhs = parse_expression_1(parser, precedence[PRE_UNARY_OP]);
 		}
 
-		chop_next(parser); // remove )
+		// normal bracketed expression
+		else {
+			lhs = parse_expression_1(parser, MIN_PRECEDENCE);
+
+			if (token_typeof(peek_next(parser)) != RIGHT_PAREN) {
+				errx("expected )");
+			}
+
+			chop_next(parser); // remove )
+		}
 	}
 
 	else if (type & PRE_UNARY_OP) {

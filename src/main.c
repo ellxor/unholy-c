@@ -29,6 +29,31 @@ void dump_token(struct Token token) {
 }
 
 static
+void print_type(struct ExprNode *node) {
+	switch (node->token->type) {
+		case KEYWORD_BOOL: printf("bool"); break;
+		case KEYWORD_CHAR: printf("char"); break;
+		case KEYWORD_INT:  printf("int");  break;
+		case KEYWORD_I8:   printf("i8");   break;
+		case KEYWORD_I16:  printf("i16");  break;
+		case KEYWORD_I32:  printf("i32");  break;
+		case KEYWORD_U8:   printf("u8");   break;
+		case KEYWORD_U16:  printf("u16");  break;
+		case KEYWORD_U32:  printf("u32");  break;
+		case KEYWORD_VOID: printf("void"); break;
+		default: errx("unreachable");
+	}
+
+	if (node->token->pointers) {
+		putchar(' ');
+	}
+
+	for (int i = 0; i < node->token->pointers; i++) {
+		putchar('*');
+	}
+}
+
+static
 void print_tree(struct ExprNode *node) {
 	switch (node->type) {
 		case TERM:
@@ -54,6 +79,14 @@ void print_tree(struct ExprNode *node) {
 			printf("( ");
 			print_tree(node->lhs);
 			printf(" %c )", node->token->value);
+			break;
+
+		case TYPE:
+			printf("(cast ");
+			print_type(node);
+			printf(" ( ");
+			print_tree(node->rhs);
+			printf(" ))");
 			break;
 
 		default:
