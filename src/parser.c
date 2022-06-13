@@ -207,7 +207,11 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 		operator.type &= BINARY_OP | POST_UNARY_OP;
 
 		if (operator.type == BINARY_OP) {
-			operator.rhs = parse_expression_1(parser, precedence[op->value]);
+			int prec = (op->value == '(' || op->value == '[')
+			         ? MIN_PRECEDENCE
+				 : precedence[op->value];
+
+			operator.rhs = parse_expression_1(parser, prec);
 
 			// function call
 			if (operator.token->value == '(') {
