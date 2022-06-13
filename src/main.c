@@ -55,9 +55,15 @@ void print_type(struct ExprNode *node) {
 
 static
 void print_tree(struct ExprNode *node) {
+	if (!node) {
+		printf("NULL");
+		return;
+	};
+
 	switch (node->type) {
 		case TERM:
-			printf("%d", node->token->value);
+			if (node->token->type == IDENTIFIER) printf("%s", node->token->text);
+			else printf("%d", node->token->value);
 			break;
 
 		case BINARY_OP:
@@ -87,6 +93,14 @@ void print_tree(struct ExprNode *node) {
 			printf(" ( ");
 			print_tree(node->rhs);
 			printf(" ))");
+			break;
+
+		case SCOPE_CLASS:
+			printf("( ");
+			print_type(node->lhs);
+			printf("::");
+			print_tree(node->rhs);
+			printf(" )");
 			break;
 
 		default:

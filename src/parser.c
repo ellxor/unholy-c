@@ -21,6 +21,9 @@ struct Token *chop_next(struct Parser *parser) {
 
 static
 int precedence[] = {
+	[')'] = MIN_PRECEDENCE,
+	[']'] = MIN_PRECEDENCE,
+
 	[','] = 0,
 
 	[OR]  = 3, [AND] = 4,
@@ -36,8 +39,10 @@ int precedence[] = {
 
 	[PRE_UNARY_OP] = 13,
 	[POST_UNARY_OP] = 14,
-	['.'] = 14,
-	[SCOPE] = 14,
+
+	['.'] = 14, // member access
+	['('] = 14, // function call
+	['['] = 14, // array subscripting
 };
 
 
@@ -69,14 +74,22 @@ enum ExprNodeType token_typeof(struct Token *token) {
 			return TYPE;
 
 		case PUNCTUATION: switch (token->value) {
-			case '{': case '}':
-			case ';':
-				return 0;
+			// invalid operators
+			case '{': case '}': case ';': return 0;
 
-			case '(': return LEFT_PAREN;
+			// left paren is also function call operator
+			case '(': return LEFT_PAREN | BINARY_OP;
 			case ')': return RIGHT_PAREN;
 
+			// array subscripting
+			case '[': return BINARY_OP;
+			case ']': return SQUARE_PAREN;
+
+			// intrinsic functions
+			case SCOPE: return SCOPE_CLASS;
+
 			case '!': case '~':
+
 				return PRE_UNARY_OP;
 
 			case INC: case DEC:
@@ -121,7 +134,7 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 	struct ExprNode *lhs = NULL;
 	enum ExprNodeType type = token_typeof(peek_next(parser));
 
-	if (type == LEFT_PAREN) {
+	if (type & LEFT_PAREN) {
 		chop_next(parser); // remove (
 
 		// check if type cast
@@ -154,13 +167,34 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 		lhs = store_object(parser->allocator, &operator, sizeof operator);
 	}
 
+	else if (type == TYPE) {
+		struct ExprNode typeclass = { chop_next(parser), TERM, NULL, NULL };
+
+		if (token_typeof(peek_next(parser)) != SCOPE_CLASS) {
+			errx("expected ::");
+		}
+
+		struct ExprNode scope = { chop_next(parser), SCOPE_CLASS, NULL, NULL };
+
+		if (peek_next(parser) == NULL || peek_next(parser)->type != IDENTIFIER) {
+			errx("expected identifier");
+		}
+
+		struct ExprNode member = { chop_next(parser), TERM, NULL, NULL };
+
+		scope.lhs = store_object(parser->allocator, &typeclass, sizeof typeclass);
+		scope.rhs = store_object(parser->allocator, &member, sizeof member);
+
+		lhs = store_object(parser->allocator, &scope, sizeof scope);
+	}
+
 	else if (type == TERM) {
 		struct ExprNode term = { chop_next(parser), TERM, NULL, NULL };
 		lhs = store_object(parser->allocator, &term, sizeof term);
 	}
 
 	else {
-		errx("expected expression!");
+		errx("expected expression! (got %d)", type);
 	}
 
 	// continue parsing binary operators / postfix unary operators
@@ -174,6 +208,24 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 
 		if (operator.type == BINARY_OP) {
 			operator.rhs = parse_expression_1(parser, precedence[op->value]);
+
+			// function call
+			if (operator.token->value == '(') {
+				if (token_typeof(peek_next(parser)) != RIGHT_PAREN) {
+					errx("expected )");
+				}
+
+				chop_next(parser); // remove )
+			}
+
+			// array subscripting
+			if (operator.token->value == '[') {
+				if (token_typeof(peek_next(parser)) != SQUARE_PAREN) {
+					errx("expected ]");
+				}
+
+				chop_next(parser); // remove ]
+			}
 		}
 
 		lhs = store_object(parser->allocator, &operator, sizeof operator);
