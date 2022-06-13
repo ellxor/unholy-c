@@ -170,7 +170,8 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 
 		// special `sizeof (type)` case:
 		// note: argument to sizeof cannot be type cast
-		if (token_typeof(peek_next(parser)) & LEFT_PAREN &&
+		if (operator.token->type == KEYWORD_SIZEOF &&
+		    token_typeof(peek_next(parser)) & LEFT_PAREN &&
 		    token_typeof(peek_next2(parser)) == TYPE) {
 
 			chop_next(parser); // remove (
