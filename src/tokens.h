@@ -84,6 +84,9 @@ struct Token {
 #define multichar_mix(a,b) (((a) + 2*(b) + 14) & 0xff)
 
 enum MultiChar {
+	INC = multichar_mix('+','+'),
+	DEC = multichar_mix('-','-'),
+
 	SHL = multichar_mix('<','<'),
 	SHR = multichar_mix('>','>'),
 
@@ -94,9 +97,6 @@ enum MultiChar {
 
 	AND = multichar_mix('&','&'),
 	OR  = multichar_mix('|','|'),
-
-	INC = multichar_mix('+','+'),
-	DEC = multichar_mix('-','-'),
 
 	RANGE = multichar_mix('.','.'),
 };
