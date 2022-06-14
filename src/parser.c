@@ -249,11 +249,21 @@ struct ExprNode *parse_expression(struct Parser *parser) {
 
 static
 const char *print_type(enum ExprNodeType type) {
-	if (type & EXPRESSION)    return "expression";
-	if (type == TYPE)         return "type";
-	if (type == RIGHT_PAREN)  return "`)`";
-	if (type == SQUARE_PAREN) return "`]`";
-	if (type == END_OF_FILE)  return "end-of-file";
+	if (type == EXPRESSION)   return "expression";
+	if (type == TERM)         return "term";
+
+	switch (type) {
+		case LITERAL:       return "literal";
+		case IDENTIFIER:    return "identifier";
+		case PRE_UNARY_OP:
+		case POST_UNARY_OP: return "unary operator";
+		case BINARY_OP:     return "binary operator";
+		case TYPE:          return "type";
+		case LEFT_PAREN:    return "`(`";
+		case RIGHT_PAREN:   return "`)`";
+		case SQUARE_PAREN:  return "`]`";
+		case END_OF_FILE:   return "EOF";
+	}
 
 	assert(0 && "unreachable");
 	return NULL;
@@ -273,7 +283,7 @@ const char *print_token(struct Token *token) {
 		case PREPROC_ASSERT ... PREPROC_WARNING:
 			return "preprocessor directive";
 
-		case TOK_EOF: return "end-of-file";
+		case TOK_EOF: return "EOF";
 
 		case KEYWORD:
 		case PREPROC:
