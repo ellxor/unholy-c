@@ -14,7 +14,7 @@ void dump_token(struct Token token) {
 	switch (token.type) {
 		case INT:		printf("INT(%d)\n", token.value); break;
 		case STRING:		printf("STRING(%s)\n", token.text); break;
-		case IDENTIFIER:	printf("IDENT(%s)\n", token.text); break;
+		case IDENT:	printf("IDENT(%s)\n", token.text); break;
 
 		case PUNCTUATION:
 			if (token.value > 0xff)
@@ -61,11 +61,14 @@ void print_tree(struct ExprNode *node) {
 	};
 
 	switch (node->type) {
-		case TERM:
-			if (node->token->type == IDENTIFIER) printf("%s", node->token->text);
-			else if (node->token->type == KEYWORD_FALSE) printf("false");
+		case LITERAL:
+			if (node->token->type == KEYWORD_FALSE) printf("false");
 			else if (node->token->type == KEYWORD_TRUE)  printf("true");
 			else printf("%d", node->token->value);
+			break;
+
+		case IDENTIFIER:
+			printf("%s", node->token->text);
 			break;
 
 		case BINARY_OP:
@@ -99,7 +102,7 @@ void print_tree(struct ExprNode *node) {
 			break;
 
 		default:
-			errx("unimplemented!");
+			errx("unimplemented! %d", node->type);
 			break;
 	}
 }
@@ -119,7 +122,7 @@ int main() {
 		dump_token(token);
 	}
 
-	struct Parser parser = { buffer, count, &allocator };
+	struct Parser parser = { buffer, count, &allocator, false };
 	struct ExprNode *root = parse_expression(&parser);
 
 	puts("\nAST DONE !!!\n");

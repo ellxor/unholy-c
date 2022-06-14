@@ -84,8 +84,10 @@ enum ExprNodeType token_typeof(struct Token *token) {
 	switch (token->type) {
 		case INT: case FLOAT: case STRING:
 		case KEYWORD_FALSE: case KEYWORD_TRUE:
-		case IDENTIFIER:
-			return TERM;
+			return LITERAL;
+
+		case IDENT:
+			return IDENTIFIER;
 
 		// keyword operators
 		case KEYWORD_SIZEOF: return PRE_UNARY_OP;
@@ -144,7 +146,7 @@ struct ExprNode *parse_type(struct Parser *parser) {
 	return store_object(parser->allocator, &type, sizeof type);
 }
 
-
+#define TERM (LITERAL | IDENTIFIER)
 #define EXPRESSION (TERM | LEFT_PAREN | PRE_UNARY_OP)
 #define CONTINUE (POST_UNARY_OP | BINARY_OP)
 
@@ -199,8 +201,9 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 			break;
 		}
 
-		case TERM: {
-			struct ExprNode term = { chop_next(parser), TERM, NULL, NULL };
+		case LITERAL:
+		case IDENTIFIER: {
+			struct ExprNode term = { chop_next(parser), type, NULL, NULL };
 			lhs = store_object(parser->allocator, &term, sizeof term);
 			break;
 		}
@@ -259,10 +262,10 @@ const char *print_type(enum ExprNodeType type) {
 static
 const char *print_token(struct Token *token) {
 	switch (token->type) {
-		case INT:        return "integer constant";
-		case FLOAT:      return "float constant";
-		case STRING:     return "string constant";
-		case IDENTIFIER: return "identifier";
+		case INT:    return "integer constant";
+		case FLOAT:  return "float constant";
+		case STRING: return "string constant";
+		case IDENT:  return "identifier";
 
 		case KEYWORD_BOOL ... KEYWORD_WHILE:
 			return "keyword";

@@ -222,7 +222,7 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 			enum TokenType type = lookup_keyword(buffer, length, KEYWORD);
 
 			if (type == NONE) {
-				token.type = IDENTIFIER;
+				token.type = IDENT;
 				token.length = length;
 				token.text = store_string(lexer->allocator, buffer, length);
 			} else {

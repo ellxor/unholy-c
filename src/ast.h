@@ -5,15 +5,16 @@
 #include <stdbool.h>
 
 enum ExprNodeType {
-	TERM          = 0x1,
-	PRE_UNARY_OP  = 0x2,
-	POST_UNARY_OP = 0x4,
-	BINARY_OP     = 0x8,
-	TYPE          = 0x10,
-	LEFT_PAREN    = 0x20,
-	RIGHT_PAREN   = 0x40,
-	SQUARE_PAREN  = 0x80,
-	END_OF_FILE   = 0x100,
+	LITERAL       = 0x001,
+	IDENTIFIER    = 0x002,
+	PRE_UNARY_OP  = 0x004,
+	POST_UNARY_OP = 0x008,
+	BINARY_OP     = 0x010,
+	TYPE          = 0x020,
+	LEFT_PAREN    = 0x040,
+	RIGHT_PAREN   = 0x080,
+	SQUARE_PAREN  = 0x100,
+	END_OF_FILE   = 0x200,
 };
 
 struct ExprNode {
