@@ -182,8 +182,9 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 				    token_typeof(peek_next2(parser)) == TYPE) {
 
 					expect_next(parser, LEFT_PAREN);
-					struct ExprNode *type = parse_type(parser);
+					op.rhs = parse_type(parser);
 					expect_next(parser, RIGHT_PAREN);
+					lhs = store_object(parser->allocator, &op, sizeof op);
 					break; // success
 				}
 
