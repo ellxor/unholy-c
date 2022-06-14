@@ -71,6 +71,7 @@ int precedence[] = {
 	['.'] = 14, // member access
 	['('] = 14, // function call
 	['['] = 14, // array subscripting
+	[INC] = 14, [DEC] = 14,
 };
 
 #define PREC_PRE_UNARY_OP  13
@@ -229,7 +230,6 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 
 			if (func_call) expect_next(parser, RIGHT_PAREN);
 			if (array_sub) expect_next(parser, SQUARE_PAREN);
-
 		}
 
 		lhs = store_object(parser->allocator, &operator, sizeof operator);
