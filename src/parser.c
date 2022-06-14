@@ -13,6 +13,9 @@
 // if offset is NULL, use current token instead
 void parser_err(struct Parser *, const char *fmt, ...) PRINTF(2,3);
 
+// get type of token
+static enum ExprNodeType token_typeof(struct Token *);
+
 static inline
 struct Token *peek_next(struct Parser *parser) {
 	return parser->length ? parser->tokens : NULL;
@@ -26,6 +29,15 @@ struct Token *peek_next2(struct Parser *parser) {
 static inline
 struct Token *chop_next(struct Parser *parser) {
 	return parser->length--, parser->tokens++;
+}
+
+static inline
+void expect_next(struct Parser *parser, enum ExprNodeType type) {
+	if (token_typeof(peek_next(parser)) & type) {
+		chop_next(parser);
+	} else {
+		parser_err(parser, "expected ..., got ...");
+	}
 }
 
 #define MIN_PRECEDENCE -1
@@ -48,14 +60,13 @@ int precedence[] = {
 	['+'] = 11, ['-'] = 11,
 	['*'] = 12, ['/'] = 12, ['%'] = 12,
 
-	[PRE_UNARY_OP] = 13,
-	[POST_UNARY_OP] = 14,
-
 	['.'] = 14, // member access
 	['('] = 14, // function call
 	['['] = 14, // array subscripting
 };
 
+#define PREC_PRE_UNARY_OP  13
+#define PREC_POST_UNARY_OP 14
 
 static
 enum ExprNodeType token_typeof(struct Token *token) {
@@ -124,112 +135,94 @@ struct ExprNode *parse_type(struct Parser *parser) {
 	return store_object(parser->allocator, &type, sizeof type);
 }
 
+#define EXPRESSION (TERM | LEFT_PAREN | PRE_UNARY_OP)
+#define CONTINUE (POST_UNARY_OP | BINARY_OP)
+
 static
 struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
-	if (peek_next(parser) == NULL) {
-		parser_err(parser, "expected expression");
-	}
-
 	struct ExprNode *lhs = NULL;
-	enum ExprNodeType type = token_typeof(peek_next(parser));
 
-	if (type & LEFT_PAREN) {
-		struct Token *reference = chop_next(parser); // remove (
+	enum ExprNodeType type = token_typeof(peek_next(parser)) & EXPRESSION;
 
-		// check if type cast
-		if (token_typeof(peek_next(parser)) == TYPE) {
-			lhs = parse_type(parser);
-
-			if (token_typeof(peek_next(parser)) != RIGHT_PAREN) {
-				parser_err(parser, "expected )");
-			}
-
-			chop_next(parser); // remove )
-			lhs->rhs = parse_expression_1(parser, precedence[PRE_UNARY_OP]);
-		}
-
-		// normal bracketed expression
-		else {
-			lhs = parse_expression_1(parser, MIN_PRECEDENCE);
-
-			if (token_typeof(peek_next(parser)) != RIGHT_PAREN) {
-				parser_err(parser, "expected )");
-			}
-
-			chop_next(parser); // remove )
-		}
-	}
-
-	else if (type & PRE_UNARY_OP) {
-		struct ExprNode operator = { chop_next(parser), PRE_UNARY_OP, NULL, NULL };
-
-		// special `sizeof (type)` case:
-		// note: argument to sizeof cannot be type cast
-		if (operator.token->type == KEYWORD_SIZEOF &&
-		    token_typeof(peek_next(parser)) & LEFT_PAREN &&
-		    token_typeof(peek_next2(parser)) == TYPE) {
-
+	switch (type) {
+		case LEFT_PAREN: {
 			chop_next(parser); // remove (
-			struct ExprNode *type = parse_type(parser);
-			chop_next(parser); // remove )
 
-			operator.rhs = type;
+			// check if type cast
+			if (token_typeof(peek_next(parser)) == TYPE) {
+				lhs = parse_type(parser);
+				expect_next(parser, RIGHT_PAREN);
+				lhs->rhs = parse_expression_1(parser, PREC_PRE_UNARY_OP);
+			}
+
+			else {
+				lhs = parse_expression_1(parser, MIN_PRECEDENCE);
+				expect_next(parser, RIGHT_PAREN);
+			}
+
+			break;
 		}
 
-		else if (operator.token->type == KEYWORD_SIZEOF &&
-		         token_typeof(peek_next(parser)) == TYPE) {
-			parser_err(parser, "expected parentheses around type name in sizeof expression");
+		case PRE_UNARY_OP: {
+			struct ExprNode op = { chop_next(parser), PRE_UNARY_OP, NULL, NULL };
+
+			// special sizeof rules:
+			// argument can be (type), cannot be a type cast
+			if (op.token->type == KEYWORD_SIZEOF) {
+				if (token_typeof(peek_next(parser)) & LEFT_PAREN &&
+				    token_typeof(peek_next2(parser)) == TYPE) {
+
+					expect_next(parser, LEFT_PAREN);
+					struct ExprNode *type = parse_type(parser);
+					expect_next(parser, RIGHT_PAREN);
+					break; // success
+				}
+
+				else if (token_typeof(peek_next(parser)) == TYPE) {
+					parser_err(parser, "expected parentheses around type name in sizeof expression");
+				}
+			}
+
+			else {
+				op.rhs = parse_expression_1(parser, PREC_PRE_UNARY_OP);
+			}
+
+			lhs = store_object(parser->allocator, &op, sizeof op);
+			break;
 		}
 
-		else {
-			operator.rhs = parse_expression_1(parser, precedence[PRE_UNARY_OP]);
+		case TERM: {
+			struct ExprNode term = { chop_next(parser), TERM, NULL, NULL };
+			lhs = store_object(parser->allocator, &term, sizeof term);
+			break;
 		}
 
-		lhs = store_object(parser->allocator, &operator, sizeof operator);
-	}
-
-	else if (type == TERM) {
-		struct ExprNode term = { chop_next(parser), TERM, NULL, NULL };
-		lhs = store_object(parser->allocator, &term, sizeof term);
-	}
-
-	else {
-		parser_err(parser, "expected expression");
+		default: {
+			parser_err(parser, "expected expression");
+			break;
+		}
 	}
 
 	// continue parsing binary operators / postfix unary operators
 
-	while ((token_typeof(peek_next(parser)) & (BINARY_OP | POST_UNARY_OP))
+	while ((token_typeof(peek_next(parser)) & CONTINUE)
 		&& precedence[peek_next(parser)->value] > min_precedence) {
 
 		struct Token *op = chop_next(parser);
-		struct ExprNode operator = { op, token_typeof(op), lhs, NULL };
-		operator.type &= BINARY_OP | POST_UNARY_OP;
+		struct ExprNode operator = { op, token_typeof(op) & CONTINUE, lhs, NULL };
 
 		if (operator.type == BINARY_OP) {
-			int prec = (op->value == '(' || op->value == '[')
-			         ? MIN_PRECEDENCE
-				 : precedence[op->value];
+			bool func_call = op->value == '(';
+			bool array_sub = op->value == '[';
+
+			int prec = precedence[op->value];
+			if (func_call || array_sub) prec = MIN_PRECEDENCE;
 
 			operator.rhs = parse_expression_1(parser, prec);
 
-			// function call
-			if (operator.token->value == '(') {
-				if (token_typeof(peek_next(parser)) != RIGHT_PAREN) {
-					parser_err(parser, "expected )");
-				}
+			if (func_call) expect_next(parser, RIGHT_PAREN);
+			if (array_sub) expect_next(parser, SQUARE_PAREN);
 
-				chop_next(parser); // remove )
-			}
-
-			// array subscripting
-			if (operator.token->value == '[') {
-				if (token_typeof(peek_next(parser)) != SQUARE_PAREN) {
-					parser_err(parser, "expected ]");
-				}
-
-				chop_next(parser); // remove ]
-			}
 		}
 
 		lhs = store_object(parser->allocator, &operator, sizeof operator);
