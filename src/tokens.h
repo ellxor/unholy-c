@@ -56,6 +56,7 @@ enum TokenType {
 	PREPROC_PRAGMA,
 	PREPROC_WARNING,
 
+	TOK_EOF,
 	NONE,
 };
 

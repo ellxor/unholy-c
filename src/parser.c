@@ -59,30 +59,21 @@ int precedence[] = {
 
 static
 enum ExprNodeType token_typeof(struct Token *token) {
-	if (!token) return 0;
+	if (token == NULL) return 0;
 
 	switch (token->type) {
-		case INT:
-		case FLOAT:
-		case STRING:
+		case INT: case FLOAT: case STRING:
+		case KEYWORD_FALSE: case KEYWORD_TRUE:
 		case IDENTIFIER:
-		case KEYWORD_FALSE:
-		case KEYWORD_TRUE:
 			return TERM;
 
 		// keyword operators
 		case KEYWORD_SIZEOF: return PRE_UNARY_OP;
 		case KEYWORD_ELSE:   return BINARY_OP;
 
-		case KEYWORD_BOOL:
-		case KEYWORD_CHAR:
-		case KEYWORD_INT:
-		case KEYWORD_I8:
-		case KEYWORD_I16:
-		case KEYWORD_I32:
-		case KEYWORD_U8:
-		case KEYWORD_U16:
-		case KEYWORD_U32:
+		case KEYWORD_BOOL: case KEYWORD_CHAR: case KEYWORD_INT:
+		case KEYWORD_I8:   case KEYWORD_I16:  case KEYWORD_I32:
+		case KEYWORD_U8:   case KEYWORD_U16:  case KEYWORD_U32:
 		case KEYWORD_VOID:
 			return TYPE;
 
@@ -99,7 +90,6 @@ enum ExprNodeType token_typeof(struct Token *token) {
 			case ']': return SQUARE_PAREN;
 
 			case '!': case '~':
-
 				return PRE_UNARY_OP;
 
 			case INC: case DEC:
@@ -133,7 +123,6 @@ struct ExprNode *parse_type(struct Parser *parser) {
 	struct ExprNode type = { raw_type, TYPE, NULL, NULL };
 	return store_object(parser->allocator, &type, sizeof type);
 }
-
 
 static
 struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
@@ -256,16 +245,9 @@ struct ExprNode *parse_expression(struct Parser *parser) {
 
 
 void parser_err(struct Parser *parser, const char *fmt, ...) {
-	struct Token *token = parser->length ? parser->tokens : NULL;
+	struct Token *token = parser->tokens;
 
-	if (token == NULL) {
-		struct Token *last = parser->tokens - 1;
-		printf(WHITE "%s:%d: ", last->filename, last->line + 1);
-	} else {
-		printf(WHITE "%s:%d:%d: ", token->filename, token->line, token->col);
-	}
-
-	printf(RED "error: " RESET);
+	printf(WHITE "%s:%d:%d: " RED "error: " RESET, token->filename, token->line, token->col);
 	parser->errors = true;
 
 	va_list args;

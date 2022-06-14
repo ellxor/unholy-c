@@ -376,6 +376,15 @@ void lex_file(const char *filename, struct Allocator *allocator, struct Vec *tok
 		lexer.col = 1;
 	}
 
+	struct Token end_of_file = {
+		.type = TOK_EOF,
+		.filename = filename,
+		.line = lexer.line,
+		.col = lexer.col,
+	};
+
+	vec_push(tokens, &end_of_file);
+
 	if (lexer.errors)
 		errx("too many errors");
 }
