@@ -299,6 +299,8 @@ bool fold_expression(struct ExprNode *root) {
 			root->type = LITERAL;
 
 			switch (root->token->value) {
+				case ',': root->token->value = B;
+
 				case OR:  root->token->value = A || B; break;
 				case AND: root->token->value = A && B; break;
 
