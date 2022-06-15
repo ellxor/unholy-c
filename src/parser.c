@@ -1,6 +1,5 @@
 #include "parser.h"
 
-#include "ast.h"
 #include "tokens.h"
 #include "util/allocator.h"
 #include "util/error.h"
@@ -37,15 +36,29 @@ struct Token *chop_next(struct Parser *parser) {
 }
 
 static inline
-void expect_next(struct Parser *parser, enum ExprNodeType type) {
+void expect_next(struct Parser *parser, char c) {
 	struct Token *tok = peek_next(parser);
-	enum ExprNodeType actual = token_typeof(tok);
 
-	if (actual & type) {
+	if (tok != NULL && tok->type == PUNCTUATION && tok->value == c) {
 		chop_next(parser);
 	} else {
-		parser_err(parser, "expected %s, got %s", print_type(type), print_token(tok));
+		parser_err(parser, "expected `%c`, got %s", c, print_token(tok));
 	}
+}
+
+static inline
+char expect_next2(struct Parser *parser, char a, char b) {
+	struct Token *tok = peek_next(parser);
+
+	if (tok != NULL && tok->type == PUNCTUATION) {
+		if (tok->value == a || tok->value == b) {
+			chop_next(parser);
+			return tok->value;
+		}
+	}
+
+	parser_err(parser, "expected `%c` or `%c`, got %s", a, b, print_token(tok));
+	return 0;
 }
 
 #define MIN_PRECEDENCE -1
@@ -163,13 +176,13 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 			// check if type cast
 			if (token_typeof(peek_next(parser)) == TYPE) {
 				lhs = parse_type(parser);
-				expect_next(parser, RIGHT_PAREN);
+				expect_next(parser, ')');
 				lhs->rhs = parse_expression_1(parser, PREC_PRE_UNARY_OP);
 			}
 
 			else {
 				lhs = parse_expression_1(parser, MIN_PRECEDENCE);
-				expect_next(parser, RIGHT_PAREN);
+				expect_next(parser, ')');
 			}
 
 			break;
@@ -184,9 +197,9 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 				if (token_typeof(peek_next(parser)) & LEFT_PAREN &&
 				    token_typeof(peek_next2(parser)) == TYPE) {
 
-					expect_next(parser, LEFT_PAREN);
+					expect_next(parser, '(');
 					op.rhs = parse_type(parser);
-					expect_next(parser, RIGHT_PAREN);
+					expect_next(parser, ')');
 					lhs = store_object(parser->allocator, &op, sizeof op);
 					break; // success
 				}
@@ -209,7 +222,7 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 		}
 
 		default: {
-			parser_err(parser, "expected expression, got %s\n", print_token(peek_next(parser)));
+			parser_err(parser, "expected expression, got %s", print_token(peek_next(parser)));
 			break;
 		}
 	}
@@ -231,8 +244,8 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 
 			operator.rhs = parse_expression_1(parser, prec);
 
-			if (func_call) expect_next(parser, RIGHT_PAREN);
-			if (array_sub) expect_next(parser, SQUARE_PAREN);
+			if (func_call) expect_next(parser, ')');
+			if (array_sub) expect_next(parser, ']');
 		}
 
 		lhs = store_object(parser->allocator, &operator, sizeof operator);
@@ -244,6 +257,119 @@ struct ExprNode *parse_expression_1(struct Parser *parser, int min_precedence) {
 
 struct ExprNode *parse_expression(struct Parser *parser) {
 	return parse_expression_1(parser, MIN_PRECEDENCE);
+}
+
+static
+bool fold_expression(struct ExprNode *root) {
+	switch (root->type) {
+		case LITERAL:
+			break;
+
+		case PRE_UNARY_OP:
+			assert(root->token->type == PUNCTUATION);
+
+			switch (root->token->value) {
+				case INC: case DEC:
+				case '&': case '*':
+					return false;
+
+				default: {
+					if (!fold_expression(root->rhs)) {
+						return false;
+					}
+
+					root->type = LITERAL;
+				}
+
+				case '!': root->token->value = !root->rhs->token->value; break;
+				case '~': root->token->value = ~root->rhs->token->value; break;
+				case '+': root->token->value = +root->rhs->token->value; break;
+				case '-': root->token->value = -root->rhs->token->value; break;
+			}
+			break;
+
+		case BINARY_OP:
+			assert(root->token->type == PUNCTUATION);
+
+			if (!fold_expression(root->lhs)) { return false; }
+			if (!fold_expression(root->rhs)) { return false; }
+
+			int A = root->lhs->token->value;
+			int B = root->rhs->token->value;
+			root->type = LITERAL;
+
+			switch (root->token->value) {
+				case OR:  root->token->value = A || B; break;
+				case AND: root->token->value = A && B; break;
+
+				case '|': root->token->value = A | B; break;
+				case '^': root->token->value = A ^ B; break;
+				case '&': root->token->value = A & B; break;
+
+				case EQ:  root->token->value = A == B; break;
+				case NEQ: root->token->value = A != B; break;
+				case '<': root->token->value = A <  B; break;
+				case LEQ: root->token->value = A <= B; break;
+				case '>': root->token->value = A >  B; break;
+				case GEQ: root->token->value = A >= B; break;
+
+				case SHL: root->token->value = A << B; break;
+				case SHR: root->token->value = A >> B; break;
+
+				case '+': root->token->value = A + B; break;
+				case '-': root->token->value = A - B; break;
+				case '*': root->token->value = A * B; break;
+				case '/': root->token->value = A / B; break;
+				case '%': root->token->value = A % B; break;
+
+				default:
+					assert(0 && "unreachable");
+					return false;
+			}
+
+			break;
+
+		case POST_UNARY_OP:
+			return false;
+
+		default:
+			assert(0 && "unreachable");
+			return false;
+	}
+
+	return true;
+}
+
+
+struct DeclNode *parse_declaration(struct Parser *parser) {
+	struct DeclNode decl = {0};
+
+	if (token_typeof(peek_next(parser)) != IDENTIFIER) {
+		parser_err(parser, "expected identifer as start of declaration");
+		return NULL;
+	}
+
+	decl.id = chop_next(parser);
+	expect_next(parser, ':');
+
+	if (token_typeof(peek_next(parser)) == TYPE) {
+		decl.type = parse_type(parser);
+	}
+
+	if (expect_next2(parser, ':', '=') == ':') {
+		decl.constant = true;
+	}
+
+	struct Parser reference = *parser;
+	decl.expr = parse_expression(parser);
+
+	if (decl.constant && !parser->errors) {
+		if (!fold_expression(decl.expr)) {
+			parser_err(&reference, "failed to fold constant expression");
+		}
+	}
+
+	return store_object(parser->allocator, &decl, sizeof decl);
 }
 
 
@@ -306,7 +432,7 @@ const char *print_token(struct Token *token) {
 				case RANGE: return "`..`";
 
 				default: {
-					static char buffer[4] = "`-`";
+					static char buffer[4] = "` `";
 					buffer[1] = token->value;
 					return buffer;
 				}

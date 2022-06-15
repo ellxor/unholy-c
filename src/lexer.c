@@ -30,7 +30,7 @@ void lexer_err(struct Lexer *lexer, enum LexerErrorType, const char *offset, con
 
 static
 const char multichar[][2] = {
-	"<<", ">>", "==", "!=", "<=", ">=", "&&", "||", "++", "--", "::", "..",
+	"<<", ">>", "==", "!=", "<=", ">=", "&&", "||", "++", "--", "..",
 };
 
 

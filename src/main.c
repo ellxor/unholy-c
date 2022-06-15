@@ -1,6 +1,6 @@
 #include <stdio.h>
+#include <assert.h>
 
-#include "ast.h"
 #include "lexer.h"
 #include "parser.h"
 #include "tokens.h"
@@ -111,7 +111,7 @@ int main() {
 	struct Vec tokens = vec(struct Token);
 	struct Allocator allocator = init_allocator();
 
-	lex_file("test.c", &allocator, &tokens);
+	lex_file("test", &allocator, &tokens);
 	puts("\n!!! PARSING DONE !!!\n");
 
 	struct Token *buffer = tokens.mem;
@@ -123,10 +123,17 @@ int main() {
 	}
 
 	struct Parser parser = { buffer, count, &allocator, false };
-	struct ExprNode *root = parse_expression(&parser);
+	struct DeclNode *decl = parse_declaration(&parser);
+	assert(decl != NULL);
 
 	puts("\nAST DONE !!!\n");
-	print_tree(root);
+
+	if (decl->constant) {
+		assert(decl->expr->type == LITERAL);
+		printf("CONSTANT :: %d", decl->expr->token->value);
+	}
+
+	else print_tree(decl->expr);
 	printf("\n\n");
 
 	vec_free(&tokens);
