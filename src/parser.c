@@ -266,7 +266,13 @@ bool fold_expression(struct ExprNode *root) {
 			break;
 
 		case PRE_UNARY_OP:
-			assert(root->token->type == PUNCTUATION);
+			assert(root->token->type == PUNCTUATION ||
+			       root->token->type == KEYWORD_SIZEOF);
+
+			if (root->token->type == KEYWORD_SIZEOF) {
+				// TODO: add type checking of expressions
+				assert(0 && "sizeof operator is not implemented");
+			}
 
 			switch (root->token->value) {
 				case INC: case DEC:
