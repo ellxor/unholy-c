@@ -12,6 +12,7 @@
 
 // if offset is NULL, use current token instead
 void parser_err(struct Parser *, const char *fmt, ...) PRINTF(2,3);
+void log_error(struct Token *, const char *fmt, ...) PRINTF(2,3);
 
 // pretty print token/type
 static const char *print_token(struct Token *);
@@ -131,7 +132,7 @@ enum ExprNodeType token_typeof(struct Token *token) {
 				return PRE_UNARY_OP | POST_UNARY_OP;
 
 			case '+': case '-':
-			case '&': case '*':
+			case '*': case SHL:
 				return PRE_UNARY_OP | BINARY_OP;
 
 			default:
@@ -271,7 +272,6 @@ bool fold_expression(struct ExprNode *root) {
 
 			if (root->token->type == KEYWORD_SIZEOF) {
 				// TODO: add type checking of expressions
-				assert(0 && "sizeof operator is not implemented");
 			}
 
 			if (!fold_expression(root->rhs)) {
@@ -282,7 +282,7 @@ bool fold_expression(struct ExprNode *root) {
 
 			switch (root->token->value) {
 				case INC: case DEC:
-				case '&': case '*': return false;
+				case '*': case SHL: return false;
 				case '!': root->token->value = !root->rhs->token->value; break;
 				case '~': root->token->value = ~root->rhs->token->value; break;
 				case '+': root->token->value = +root->rhs->token->value; break;
@@ -456,6 +456,18 @@ void parser_err(struct Parser *parser, const char *fmt, ...) {
 
 	printf(WHITE "%s:%d:%d: " RED "error: " RESET, token->filename, token->line, token->col);
 	parser->errors = true;
+
+	va_list args;
+	va_start(args, fmt);
+
+	vprintf(fmt, args);
+	va_end(args);
+
+	putchar('\n');
+}
+
+void log_error(struct Token *token, const char *fmt, ...) {
+	printf(WHITE "%s:%d:%d: " RED "error: " RESET, token->filename, token->line, token->col);
 
 	va_list args;
 	va_start(args, fmt);
