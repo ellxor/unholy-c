@@ -99,7 +99,7 @@ enum MultiChar {
 	AND = multichar_mix('&','&'),
 	OR  = multichar_mix('|','|'),
 
-	RANGE = multichar_mix('.','.'),
+	COM = multichar_mix(':', ':'),
 };
 
 #endif

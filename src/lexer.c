@@ -30,7 +30,7 @@ void lexer_err(struct Lexer *lexer, enum LexerErrorType, const char *offset, con
 
 static
 const char multichar[][2] = {
-	"<<", ">>", "==", "!=", "<=", ">=", "&&", "||", "++", "--", "..",
+	"<<", ">>", "==", "!=", "<=", ">=", "&&", "||", "++", "--", "::",
 };
 
 
@@ -291,8 +291,8 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 			// handle multi-char punctuation
 			int size = sizeof multichar / sizeof multichar[0];
 
-			char a = chop_next(lexer);
-			char b = peek_next(lexer);
+			int a = chop_next(lexer);
+			int b = peek_next(lexer);
 
 			// store single character temporarily
 			token.value = a;

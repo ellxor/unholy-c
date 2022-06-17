@@ -36,7 +36,7 @@ struct Token *chop_next(struct Parser *parser) {
 }
 
 static inline
-void expect_next(struct Parser *parser, char c) {
+void expect_next(struct Parser *parser, unsigned char c) {
 	struct Token *tok = peek_next(parser);
 
 	if (tok != NULL && tok->type == PUNCTUATION && tok->value == c) {
@@ -47,7 +47,7 @@ void expect_next(struct Parser *parser, char c) {
 }
 
 static inline
-char expect_next2(struct Parser *parser, char a, char b) {
+unsigned char expect_next2(struct Parser *parser, unsigned char a, unsigned char b) {
 	struct Token *tok = peek_next(parser);
 
 	if (tok != NULL && tok->type == PUNCTUATION) {
@@ -351,19 +351,15 @@ bool fold_expression(struct ExprNode *root) {
 struct DeclNode *parse_declaration(struct Parser *parser) {
 	struct DeclNode decl = {0};
 
-	if (token_typeof(peek_next(parser)) != IDENTIFIER) {
-		parser_err(parser, "expected identifer as start of declaration");
+	if (token_typeof(peek_next(parser)) != TYPE) {
+		parser_err(parser, "expected type as start of declaration");
 		return NULL;
 	}
 
+	decl.type = parse_type(parser);
 	decl.id = chop_next(parser);
-	expect_next(parser, ':');
 
-	if (token_typeof(peek_next(parser)) == TYPE) {
-		decl.type = parse_type(parser);
-	}
-
-	if (expect_next2(parser, ':', '=') == ':') {
+	if (expect_next2(parser, '=', COM) == COM) {
 		decl.constant = true;
 	}
 
@@ -436,7 +432,7 @@ const char *print_token(struct Token *token) {
 				case GEQ:   return "`>=`";
 				case AND:   return "`&&`";
 				case OR:    return "`||`";
-				case RANGE: return "`..`";
+				case COM:   return "`::`";
 
 				default: {
 					static char buffer[4] = "` `";
