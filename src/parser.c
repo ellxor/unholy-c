@@ -289,7 +289,8 @@ bool fold_expression(struct ExprNode *root) {
 			break;
 
 		case BINARY_OP:
-			assert(root->token->type == PUNCTUATION);
+			assert(root->token->type == PUNCTUATION ||
+			       root->token->type == KEYWORD_ELSE);
 
 			if (!fold_expression(root->lhs)) { return false; }
 			if (!fold_expression(root->rhs)) { return false; }
@@ -298,7 +299,11 @@ bool fold_expression(struct ExprNode *root) {
 			int B = root->rhs->token->value;
 			root->type = LITERAL;
 
-			switch (root->token->value) {
+			if (root->token->type == KEYWORD_ELSE) {
+				root->token->value = A ? A : B;
+			}
+
+			else switch (root->token->value) {
 				case ',': root->token->value = B;
 
 				case OR:  root->token->value = A || B; break;
