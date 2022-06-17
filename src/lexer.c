@@ -61,8 +61,8 @@ int chop_hex_digit(struct Lexer *lexer) {
 	char c = peek_next(lexer);
 
 	if ('0' <= c && c <= '9')       return chop_next(lexer) - '0';
-	else if ('a' <= c && c <= 'f')  return chop_next(lexer) - 'a';
-	else if ('A' <= c && c <= 'F')  return chop_next(lexer) - 'A';
+	else if ('a' <= c && c <= 'f')  return chop_next(lexer) - 'a' + 10;
+	else if ('A' <= c && c <= 'F')  return chop_next(lexer) - 'A' + 10;
 
 	lexer_err(lexer, ERROR, NULL, "expected hex digit, found `%c`", c);
 	return chop_next(lexer);
