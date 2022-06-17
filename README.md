@@ -1,9 +1,7 @@
 unholy-c is an experimental C compiler
 
 **Todo:**
-- [x] implement basic operator precedence parser (+-*/())
-- [x] add full set of binary operators
-- [x] add support for unary operators
-- [x] add support for member access (`.` and `::` (custom))
-- [x] add support for function calls and type casts
-- [x] add support for array subscripting
+- [ ] add type inference of expressions
+- [ ] add scope to store variables / constants / functions
+- [ ] add type checking for expressions
+- [ ] implement sizeof operator
