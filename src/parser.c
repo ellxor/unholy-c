@@ -274,23 +274,22 @@ bool fold_expression(struct ExprNode *root) {
 				assert(0 && "sizeof operator is not implemented");
 			}
 
+			if (!fold_expression(root->rhs)) {
+				return false;
+			}
+
+			root->type = LITERAL;
+
 			switch (root->token->value) {
 				case INC: case DEC:
-				case '&': case '*':
-					return false;
-
-				default: {
-					if (!fold_expression(root->rhs)) {
-						return false;
-					}
-
-					root->type = LITERAL;
-				}
-
+				case '&': case '*': return false;
 				case '!': root->token->value = !root->rhs->token->value; break;
 				case '~': root->token->value = ~root->rhs->token->value; break;
 				case '+': root->token->value = +root->rhs->token->value; break;
 				case '-': root->token->value = -root->rhs->token->value; break;
+				default:
+					assert(0 && "unreachable");
+					return false;
 			}
 			break;
 
