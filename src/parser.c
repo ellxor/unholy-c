@@ -272,6 +272,7 @@ bool fold_expression(struct ExprNode *root) {
 
 			if (root->token->type == KEYWORD_SIZEOF) {
 				// TODO: add type checking of expressions
+				errx("sizeof operator is not implemented!");
 			}
 
 			if (!fold_expression(root->rhs)) {
@@ -339,6 +340,10 @@ bool fold_expression(struct ExprNode *root) {
 					return false;
 			}
 
+			break;
+
+		case TYPE:
+			errx("type casts are not supported yet");
 			break;
 
 		case POST_UNARY_OP:
