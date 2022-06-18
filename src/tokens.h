@@ -64,8 +64,11 @@ struct Token {
 	enum TokenType type;
 
 	// data: TODO: add support for floating point literals
-	union { int value, length, pointers; };
-	const char *text;
+	union {
+		struct { int value; };
+		struct { int length; const char *text; };
+		struct { int pointers; };
+	};
 
 	// location reference
 	const char *filename;
