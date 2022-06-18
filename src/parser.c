@@ -381,27 +381,27 @@ struct DeclNode *parse_declaration(struct Parser *parser) {
 }
 
 
-static
-const char *print_type(enum ExprNodeType type) {
-	if (type == EXPRESSION)   return "expression";
-	if (type == TERM)         return "term";
+// static
+// const char *print_type(enum ExprNodeType type) {
+// 	if (type == EXPRESSION)   return "expression";
+// 	if (type == TERM)         return "term";
 
-	switch (type) {
-		case LITERAL:       return "literal";
-		case IDENTIFIER:    return "identifier";
-		case PRE_UNARY_OP:
-		case POST_UNARY_OP: return "unary operator";
-		case BINARY_OP:     return "binary operator";
-		case TYPE:          return "type";
-		case LEFT_PAREN:    return "`(`";
-		case RIGHT_PAREN:   return "`)`";
-		case SQUARE_PAREN:  return "`]`";
-		case END_OF_FILE:   return "EOF";
-	}
+// 	switch (type) {
+// 		case LITERAL:       return "literal";
+// 		case IDENTIFIER:    return "identifier";
+// 		case PRE_UNARY_OP:
+// 		case POST_UNARY_OP: return "unary operator";
+// 		case BINARY_OP:     return "binary operator";
+// 		case TYPE:          return "type";
+// 		case LEFT_PAREN:    return "`(`";
+// 		case RIGHT_PAREN:   return "`)`";
+// 		case SQUARE_PAREN:  return "`]`";
+// 		case END_OF_FILE:   return "EOF";
+// 	}
 
-	assert(0 && "unreachable");
-	return NULL;
-}
+// 	assert(0 && "unreachable");
+// 	return NULL;
+// }
 
 static
 const char *print_token(struct Token *token) {
