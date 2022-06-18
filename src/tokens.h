@@ -65,7 +65,7 @@ struct Token {
 
 	// data: TODO: add support for floating point literals
 	union {
-		struct { int value; };
+		struct { unsigned value; };
 		struct { int length; const char *text; };
 		struct { int pointers; };
 	};

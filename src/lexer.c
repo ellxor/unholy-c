@@ -71,7 +71,7 @@ int chop_hex_digit(struct Lexer *lexer) {
 
 static
 int chop_int(struct Lexer *lexer) {
-	int result = 0, digits = 0, base = 10;
+	unsigned result = 0, digits = 0, base = 10;
 	bool overflow = false;
 
 	// keep copy of start pointer
