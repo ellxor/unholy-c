@@ -260,6 +260,138 @@ struct ExprNode *parse_expression(struct Parser *parser) {
 	return parse_expression_1(parser, MIN_PRECEDENCE);
 }
 
+enum BasicType { ERR_T, VOID_T, BOOL_T, CHAR_T, INT_T, U32_T };
+struct Type { enum BasicType base; int pointers; };
+
+
+static
+struct Type from_exprnode_type(struct ExprNode *node) {
+	struct Type type = {0};
+
+	switch (node->token->type) {
+		case KEYWORD_BOOL: type.base = BOOL_T; break;
+		case KEYWORD_CHAR: type.base = CHAR_T; break;
+		case KEYWORD_INT:  type.base =  INT_T; break;
+		case KEYWORD_U32:  type.base =  U32_T; break;
+		case KEYWORD_VOID: type.base = VOID_T; break;
+		default: assert(0 && "unreachable");
+	}
+
+	type.pointers = node->token->pointers;
+	return type;
+}
+
+
+static
+int sizeof_type(struct Type type) {
+	// pointers are 32-bit
+	if (type.pointers > 0) {
+		return 4;
+	}
+
+	switch (type.base) {
+		case ERR_T: assert(0 && "unreachable");
+		case VOID_T: return 0;
+		case BOOL_T: case CHAR_T: return 1;
+		case INT_T:  case U32_T:  return 4;
+	}
+
+	assert(0 && "unreachable");
+	return -1;
+}
+
+
+static
+struct Type result_type_of(struct ExprNode *node) {
+	struct Type type = {0};
+
+	// for null just return void as the type
+	if (node == NULL) {
+		type.base = VOID_T;
+		return type;
+	}
+
+	struct Type lhs_T = result_type_of(node->lhs);
+	struct Type rhs_T = result_type_of(node->rhs);
+
+	// propogate errors
+	if (lhs_T.base == ERR_T || rhs_T.base == ERR_T) {
+		type.base = ERR_T;
+		return type;
+	}
+
+	switch (node->type) {
+		case LITERAL:
+			type.base = U32_T; // all literals are u32 by default
+			break;
+
+		case IDENTIFIER:
+			// TODO: lookup identifier type
+			assert(0 && "unimplemented!");
+			break;
+
+		case PRE_UNARY_OP:
+			switch (node->token->value) {
+				case INC: case DEC:
+				case '+': case '~':
+					type = rhs_T; break;
+
+				case '!': type.base = BOOL_T; break;
+				case '-': type.base = (rhs_T.base == U32_T) ? INT_T : rhs_T.base; break;
+
+				case '*': type = rhs_T; type.pointers++; break;
+				case SHL: type = rhs_T; type.pointers--; break;
+			}
+			break;
+
+		case POST_UNARY_OP:
+			type = lhs_T;
+			break;
+
+		case BINARY_OP:
+			switch (node->token->value) {
+				case ',':
+					type = rhs_T;
+					break;
+
+				// logical / comparison operators
+				case OR: case AND:
+				case EQ: case NEQ:
+				case '<': case '>':
+				case LEQ: case GEQ:
+					type.base = BOOL_T;
+					break;
+
+				// arithmetic and bitwise operators
+				case '+': case '-':
+				case '*': case '/': case '%':
+				case '|': case '^': case '&':
+					// char and bool get promoted to int for arithmetic
+					type.base = max(max(lhs_T.base, rhs_T.base), INT_T);
+					break;
+
+				// shift operators
+				case SHL: case SHR:
+					type.base = lhs_T.base;
+					break;
+
+				default:
+					assert(0 && "unreachable");
+			}
+
+			break;
+
+		case TYPE:
+			type = from_exprnode_type(node);
+			break;
+
+		default:
+			assert(0 && "unreachable");
+	}
+
+	return type;
+}
+
 static
 bool fold_expression(struct ExprNode *root) {
 	switch (root->type) {
@@ -384,7 +516,6 @@ struct DeclNode *parse_declaration(struct Parser *parser) {
 
 	return store_object(parser->allocator, &decl, sizeof decl);
 }
-
 
 // static
 // const char *print_type(enum ExprNodeType type) {
