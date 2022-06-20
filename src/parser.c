@@ -16,7 +16,7 @@ void log_error(struct Token *, const char *fmt, ...) PRINTF(2,3);
 
 // pretty print token/type
 static const char *print_token(struct Token *);
-static const char *print_type(enum ExprNodeType);
+// static const char *print_type(enum ExprNodeType);
 
 // get type of token
 static enum ExprNodeType token_typeof(struct Token *);
@@ -107,9 +107,8 @@ enum ExprNodeType token_typeof(struct Token *token) {
 		case KEYWORD_SIZEOF: return PRE_UNARY_OP;
 		case KEYWORD_ELSE:   return BINARY_OP;
 
-		case KEYWORD_BOOL: case KEYWORD_CHAR: case KEYWORD_INT:
-		case KEYWORD_I8:   case KEYWORD_I16:  case KEYWORD_I32:
-		case KEYWORD_U8:   case KEYWORD_U16:  case KEYWORD_U32:
+		case KEYWORD_BOOL: case KEYWORD_CHAR:
+		case KEYWORD_INT:  case KEYWORD_U32:
 		case KEYWORD_VOID:
 			return TYPE;
 
@@ -547,10 +546,10 @@ const char *print_token(struct Token *token) {
 		case STRING: return "string constant";
 		case IDENT:  return "identifier";
 
-		case KEYWORD_BOOL ... KEYWORD_WHILE:
+		case KEYWORD + 1 ... KEYWORD_END - 1:
 			return "keyword";
 
-		case PREPROC_ASSERT ... PREPROC_WARNING:
+		case PREPROC + 1 ... PREPROC_END - 1:
 			return "preprocessor directive";
 
 		case TOK_EOF: return "EOF";
@@ -581,6 +580,9 @@ const char *print_token(struct Token *token) {
 					return buffer;
 				}
 			}
+
+		default:
+			assert(0 && "unreachable");
 	}
 
 	assert(0 && "unreachable");

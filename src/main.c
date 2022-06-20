@@ -15,11 +15,6 @@ void print_type(struct ExprNode *node) {
 		case KEYWORD_BOOL: printf("bool"); break;
 		case KEYWORD_CHAR: printf("char"); break;
 		case KEYWORD_INT:  printf("int");  break;
-		case KEYWORD_I8:   printf("i8");   break;
-		case KEYWORD_I16:  printf("i16");  break;
-		case KEYWORD_I32:  printf("i32");  break;
-		case KEYWORD_U8:   printf("u8");   break;
-		case KEYWORD_U16:  printf("u16");  break;
 		case KEYWORD_U32:  printf("u32");  break;
 		case KEYWORD_VOID: printf("void"); break;
 		default: errx("unreachable");
