@@ -66,6 +66,7 @@ unsigned char expect_next2(struct Parser *parser, unsigned char a, unsigned char
 
 static
 int precedence[] = {
+	// closing parens always end sub-expressions
 	[')'] = MIN_PRECEDENCE,
 	[']'] = MIN_PRECEDENCE,
 
@@ -96,11 +97,11 @@ enum ExprNodeType token_typeof(struct Token *token) {
 	if (token == NULL) return 0;
 
 	switch (token->type) {
-		case INT: case FLOAT: case STRING:
+		case INT_LITERAL: case FLOAT_LITERAL: case STRING_LITERAL:
 		case KEYWORD_FALSE: case KEYWORD_TRUE:
 			return LITERAL;
 
-		case IDENT:
+		case SYMBOL:
 			return IDENTIFIER;
 
 		// keyword operators
@@ -541,10 +542,10 @@ struct DeclNode *parse_declaration(struct Parser *parser) {
 static
 const char *print_token(struct Token *token) {
 	switch (token->type) {
-		case INT:    return "integer constant";
-		case FLOAT:  return "float constant";
-		case STRING: return "string constant";
-		case IDENT:  return "identifier";
+		case INT_LITERAL:    return "integer constant";
+		case FLOAT_LITERAL:  return "float constant";
+		case STRING_LITERAL: return "string constant";
+		case SYMBOL:  return "identifier";
 
 		case KEYWORD + 1 ... KEYWORD_END - 1:
 			return "keyword";

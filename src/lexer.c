@@ -222,7 +222,7 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 			enum TokenType type = lookup_keyword(buffer, length, KEYWORD);
 
 			if (type == NONE) {
-				token.type = IDENT;
+				token.type = SYMBOL;
 				token.length = length;
 				token.text = store_string(lexer->allocator, buffer, length);
 			} else {
@@ -244,12 +244,12 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 			break;
 
 		case '0' ... '9':
-			token.type = INT;
+			token.type = INT_LITERAL;
 			token.value = chop_int(lexer);
 			break;
 
 		case '"':
-			token.type = STRING;
+			token.type = STRING_LITERAL;
 
 			length = chop_string(lexer, '"', buffer);
 			if (length < 0) return; //string error
@@ -258,7 +258,7 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 			break;
 
 		case '\'':
-			token.type = INT;
+			token.type = INT_LITERAL;
 
 			length = chop_string(lexer, '\'', buffer);
 			if (length < 0) return; //string error

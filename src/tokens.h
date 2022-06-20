@@ -6,11 +6,11 @@
 #define PREPROC_COUNT (PREPROC_END - PREPROC - 1)
 
 enum TokenType {
-	INT,
-	FLOAT,
-	STRING,
+	INT_LITERAL,
+	FLOAT_LITERAL,
+	STRING_LITERAL,
 	PUNCTUATION,
-	IDENT,
+	SYMBOL,
 
 	KEYWORD,
 	KEYWORD_BOOL,
@@ -92,6 +92,9 @@ enum MultiChar {
 	OR  = multichar_mix('|','|'),
 
 	COM = multichar_mix(':', ':'),
+
+	POST_INC = INC + 1,
+	POST_DEC = DEC + 1,
 };
 
 #endif
