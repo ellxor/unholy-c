@@ -6,13 +6,12 @@
 #include "tokens.h"
 #include "util/allocator.h"
 #include "util/vec.h"
-#include "util/util.h"
 
 struct Lexer {
 	const char *filename;
 	const char *stream, *start;
 	int line, col;
-	bool errors;
+	int errors;
 
 	struct Allocator *allocator;
 };
