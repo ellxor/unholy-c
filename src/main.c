@@ -1,13 +1,11 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "allocator.h"
 #include "lexer.h"
 #include "parser.h"
 #include "tokens.h"
-
-#include "util/allocator.h"
-#include "util/error.h"
-#include "util/vec.h"
+#include "util.h"
 
 static
 void print_type(struct ExprNode *node) {

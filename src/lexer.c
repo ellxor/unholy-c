@@ -9,10 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "util/allocator.h"
-#include "util/error.h"
-#include "util/hash.h"
-#include "util/vec.h"
+#include "allocator.h"
+#include "util.h"
 
 enum {
 	MAX_BUFFER_SIZE = 1024,
@@ -201,12 +199,6 @@ int chop_identifier(struct Lexer *lexer, char *buffer) {
 }
 
 // KEYWORDS
-#include "util/hash.h"
-
-#if !defined(static_assert)
-#define static_assert(cond, msg)
-#endif
-
 struct KeywordEntry {
 	const char *keyword;
 	int length, id;

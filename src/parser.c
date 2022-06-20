@@ -1,9 +1,7 @@
 #include "parser.h"
 
 #include "tokens.h"
-#include "util/allocator.h"
-#include "util/error.h"
-#include "util/util.h"
+#include "util.h"
 
 #include <assert.h>
 #include <stdarg.h>

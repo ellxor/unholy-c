@@ -4,8 +4,7 @@
 #include <stdbool.h>
 
 #include "tokens.h"
-#include "util/allocator.h"
-#include "util/vec.h"
+#include "util.h"
 
 struct Lexer {
 	const char *filename;

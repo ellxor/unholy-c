@@ -1,9 +1,9 @@
 #ifndef PARSER_H_
 #define PARSER_H_
 
+#include "allocator.h"
 #include "tokens.h"
-#include "util/allocator.h"
-#include "util/vec.h"
+#include "util.h"
 
 #include <stdbool.h>
 
