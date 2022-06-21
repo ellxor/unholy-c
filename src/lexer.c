@@ -106,10 +106,12 @@ int chop_int(struct Lexer *lexer) {
 			lexer_err(lexer, ERROR, lexer->stream - 1, "binary digit `%c` is not 0 or 1", '0' + digit);
 		}
 
+		unsigned old = result;
+
 		result *= base;
 		result += digit;
 
-		if (result < 0)
+		if (result < old)
 			overflow = true;
 	}
 
@@ -119,7 +121,7 @@ int chop_int(struct Lexer *lexer) {
 
 	if (overflow) {
 		int length = lexer->stream - start;
-		lexer_err(lexer, ERROR, start, "integer constant overflows int type: `%.*s`", length, start);
+		lexer_err(lexer, ERROR, start, "integer constant overflows max int type: `%.*s`", length, start);
 	}
 
 	return result;
