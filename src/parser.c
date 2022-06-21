@@ -320,8 +320,6 @@ struct AST_Expression *parse_expression_1(struct Parser *parser, int min_precede
 		&& precedence[peek_next(parser)->value] > min_precedence) {
 
 		struct Token *op = chop_next(parser);
-		puts(print_token(op));
-
 		enum AST_ExpressionType type = get_token_type(op) & CONTINUE;
 		struct AST_Expression operator = { .type = type };
 
