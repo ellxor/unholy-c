@@ -1,6 +1,8 @@
 #ifndef TOKENS_H_
 #define TOKENS_H_
 
+#include <stdbool.h>
+
 // update when modifying keyword and preproc enums
 #define KEYWORD_COUNT (KEYWORD_END - KEYWORD - 1)
 #define PREPROC_COUNT (PREPROC_END - PREPROC - 1)
@@ -54,7 +56,7 @@ struct Token {
 
 	// data: TODO: add support for floating point literals
 	union {
-		struct { unsigned value; };
+		struct { unsigned value; bool is_char; };
 		struct { int length; const char *text; };
 		struct { int pointers; };
 	};

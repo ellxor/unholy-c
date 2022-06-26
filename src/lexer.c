@@ -334,6 +334,7 @@ void chop_token(struct Lexer *lexer, struct Vec *tokens) {
 			}
 
 			token.value = *buffer;
+			token.is_char = true;
 			break;
 
 		case 0 ... 0x20:
