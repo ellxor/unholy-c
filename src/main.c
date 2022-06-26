@@ -26,7 +26,7 @@ void print_expr(struct AST_Expression *expr, int depth) {
 			break;
 
 		case IDENTIFIER:
-			printf("ID(%s)", expr->identifier.token->text);
+			printf("ID(%s)\n", expr->identifier.token->text);
 			break;
 
 		case UNARY_OP:
@@ -40,6 +40,10 @@ void print_expr(struct AST_Expression *expr, int depth) {
 			break;
 
 		case TYPE_CAST:
+			assert(0 && "unimplemented!");
+			break;
+
+		case FUNC_CALL:
 			assert(0 && "unimplemented!");
 			break;
 	}

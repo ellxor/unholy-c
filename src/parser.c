@@ -36,7 +36,7 @@ void expect_next(struct Parser *parser, unsigned char c) {
 	if (tok != NULL && tok->type == PUNCTUATION && tok->value == c) {
 		chop_next(parser);
 	} else {
-		parser_error(parser, NULL, "expected `%c`, got %s", c, print_token(tok));
+		parser_error(parser, NULL, "expected `%c`, got %s.", c, print_token(tok));
 	}
 }
 
@@ -51,7 +51,7 @@ unsigned char expect_next_either(struct Parser *parser, unsigned char a, unsigne
 		}
 	}
 
-	parser_error(parser, NULL, "expected `%c` or `%c`, got %s", a, b, print_token(tok));
+	parser_error(parser, NULL, "expected `%c` or `%c`, got %s.", a, b, print_token(tok));
 	return 0;
 }
 
@@ -86,11 +86,11 @@ int precedence[] = {
 };
 
 // Other AST_ExpressionType masks
-#define POST_UNARY_OP  0x040
-#define LEFT_PAREN     0x080
-#define RIGHT_PAREN    0x100
-#define SQUARE_PAREN   0x200
-#define TYPE           0x400
+#define POST_UNARY_OP  0x080
+#define LEFT_PAREN     0x100
+#define RIGHT_PAREN    0x200
+#define SQUARE_PAREN   0x400
+#define TYPE           0x800
 
 #define TERM       (LITERAL | STRING | IDENTIFIER)
 #define EXPRESSION (TERM | LEFT_PAREN | UNARY_OP)
@@ -186,9 +186,7 @@ int sizeof_type(struct ExpressionType type) {
 		case CHAR: return 1;
 		case INT:  return 4;
 		case U32:  return 4;
-
-		case UNKNOWN:
-			assert(0 && "unreachable");
+		case STR:  assert(0 && "unreachable");
 	}
 }
 
@@ -263,7 +261,7 @@ struct AST_Expression *parse_expression_1(struct Parser *parser, int min_precede
 				}
 
 				else if (get_token_type(peek_next(parser)) == TYPE) {
-					parser_error(parser, NULL, "expected parentheses around type name in sizeof expression");
+					parser_error(parser, NULL, "expected parentheses around type name in sizeof expression.");
 				}
 			}
 
@@ -274,14 +272,11 @@ struct AST_Expression *parse_expression_1(struct Parser *parser, int min_precede
 
 		case LITERAL: {
 			struct Token *token = chop_next(parser);
-			struct ExpressionType T = {
-				.type = (token->value > INT_MAX) ? U32 : INT,
-				.pointers = 0
-			};
 
 			struct AST_Expression literal = {
 				.type = LITERAL,
-				.literal = { token, T, token->value },
+				.literal = { .token = token,
+				             .value = token->value },
 			};
 
 			lhs = store_object(parser->allocator, &literal, sizeof literal);
@@ -309,7 +304,7 @@ struct AST_Expression *parse_expression_1(struct Parser *parser, int min_precede
 		}
 
 		default: {
-			parser_error(parser, NULL, "expected expression, got %s", print_token(peek_next(parser)));
+			parser_error(parser, NULL, "expected expression, got %s.", print_token(peek_next(parser)));
 			break;
 		}
 	}
@@ -344,6 +339,20 @@ struct AST_Expression *parse_expression_1(struct Parser *parser, int min_precede
 
 			if (func_call) expect_next(parser, ')');
 			if (array_sub) expect_next(parser, ']');
+
+			if (func_call) {
+				struct AST_Expression func_call = {
+					.type = FUNC_CALL,
+					.func_call = {
+						.token = operator.binary_op.token,
+						.func  = operator.binary_op.lhs,
+						.args  = operator.binary_op.rhs,
+					},
+				};
+
+				lhs = store_object(parser->allocator, &func_call, sizeof func_call);
+				continue;
+			}
 		}
 
 		lhs = store_object(parser->allocator, &operator, sizeof operator);
@@ -358,54 +367,149 @@ struct AST_Expression *parse_expression(struct Parser *parser) {
 }
 
 
-// struct DeclNode *parse_declaration(struct Parser *parser) {
-// 	struct DeclNode decl = {0};
+static
+struct ExpressionType type_check_expression(struct AST_Expression *expr, struct Parser *parser) {
+	struct ExpressionType type = {0};
 
-// 	if (token_typeof(peek_next(parser)) != TYPE) {
-// 		parser_err(parser, "expected type as start of declaration");
-// 		return NULL;
-// 	}
+	switch (expr->type) {
+		case LITERAL:
+			type.temporary = true;
+			if (expr->literal.token->is_char) type.type = CHAR;
+			else type.type = (expr->literal.value <= INT_MAX) ? INT: U32;
+			break;
 
-// 	decl.type = parse_type(parser);
-// 	decl.id = chop_next(parser);
+		case STRING:
+			type.type = STR; // strings are their own compile-time type
+			break;
 
-// 	if (expect_next2(parser, '=', COM) == COM) {
-// 		decl.constant = true;
-// 	}
+		case IDENTIFIER:
+			// TODO: lookup variable in scope
+			errx("variables are not implemented yet!");
+			break;
 
-// 	struct Parser reference = *parser;
-// 	decl.expr = parse_expression(parser);
+		case UNARY_OP: {
+			struct AST_ExprUnaryOp op = expr->unary_op;
+			struct ExpressionType rhs = type_check_expression(op.rhs, parser);
+			if (parser->errors) break;
 
-// 	if (decl.constant && !parser->errors) {
-// 		if (!fold_expression(decl.expr)) {
-// 			parser_err(&reference, "failed to fold constant expression");
-// 		}
-// 	}
+			if (op.token->type == KEYWORD_SIZEOF) {
+				type.type = U32;
+				type.temporary = true;
+				break;
+			}
 
-// 	return store_object(parser->allocator, &decl, sizeof decl);
-// }
+			assert(op.token->type == PUNCTUATION);
+			switch (op.token->value) {
+				case '+': case '-': case '~':
+					if (rhs.pointers > 0 || rhs.type == VOID) {
+						parser_error(parser, op.token, "Invalid argument type '%%' to unary expression.");
+					}
 
-// static
-// const char *print_type(enum ExprNodeType type) {
-// 	if (type == EXPRESSION)   return "expression";
-// 	if (type == TERM)         return "term";
+					type.type = INT;
+					type.temporary = true;
+					break;
 
-// 	switch (type) {
-// 		case LITERAL:       return "literal";
-// 		case IDENTIFIER:    return "identifier";
-// 		case PRE_UNARY_OP:
-// 		case POST_UNARY_OP: return "unary operator";
-// 		case BINARY_OP:     return "binary operator";
-// 		case TYPE:          return "type";
-// 		case LEFT_PAREN:    return "`(`";
-// 		case RIGHT_PAREN:   return "`)`";
-// 		case SQUARE_PAREN:  return "`]`";
-// 		case END_OF_FILE:   return "EOF";
-// 	}
+				case INC: case DEC:
+				case POST_INC: case POST_DEC:
+					if (rhs.temporary) {
+						parser_error(parser, op.token, "Expression is not assignable.");
+					}
 
-// 	assert(0 && "unreachable");
-// 	return NULL;
-// }
+					type = rhs;
+					type.temporary = true;
+					break;
+
+				case '*':
+					if (rhs.temporary || rhs.type == VOID) {
+						parser_error(parser, op.token, "Expression has no address.");
+					}
+
+					type = rhs;
+					type.pointers++;
+					break;
+
+				case SHL:
+					if (rhs.pointers == 0) {
+						parser_error(parser, op.token, "Cannot dereference non-pointer.");
+					}
+
+					type = rhs;
+					type.pointers--;
+					type.temporary = false;
+					break;
+
+				default:
+					assert(0 && "unreachable");
+			}
+
+			break;
+		}
+
+		case BINARY_OP: {
+			struct AST_ExprBinaryOp op = expr->binary_op;
+			struct ExpressionType lhs = type_check_expression(op.lhs, parser);
+			struct ExpressionType rhs = type_check_expression(op.rhs, parser);
+			if (parser->errors) break;
+
+			if (op.token->type == KEYWORD_ELSE) {
+				break;
+			}
+
+			switch (op.token->value) {
+				case ',':
+					type = rhs;
+					break;
+
+				// logical
+				case OR: case AND:
+					break;
+
+				// bitwise
+				case '|': case '^': case '&':
+					break;
+
+				// comparison
+				case EQ: case NEQ:
+				case '<': case LEQ: case '>': case GEQ:
+					break;
+
+				// shift
+				case SHL: case SHR:
+					break;
+
+				// (pointer) arithmetic
+				case '+':
+					break;
+
+				case '-':
+					break;
+
+				// arithmetic
+				case '*': case '/': case '%':
+					break;
+
+				// index
+				case '[':
+					break;
+
+				default:
+					assert(0 && "unreachable");
+			}
+
+			break;
+		}
+
+		case TYPE_CAST:
+			errx("type casts are not supported yet!");
+			break;
+
+		case FUNC_CALL:
+			errx("function calls are not supported yet!");
+			break;
+	}
+
+	return type;
+}
 
 
 const char *print_token(struct Token *token) {
@@ -413,7 +517,7 @@ const char *print_token(struct Token *token) {
 		case INT_LITERAL:    return "integer constant";
 		//case FLOAT_LITERAL:  return "float constant";
 		case STRING_LITERAL: return "string constant";
-		case SYMBOL:  return "identifier";
+		case SYMBOL:         return "identifier";
 
 		case KEYWORD + 1 ... KEYWORD_END - 1:
 			return "keyword";
@@ -453,9 +557,6 @@ const char *print_token(struct Token *token) {
 		default:
 			assert(0 && "unreachable");
 	}
-
-	assert(0 && "unreachable");
-	return NULL;
 }
 
 

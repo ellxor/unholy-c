@@ -3,22 +3,23 @@
 
 // type info for AST_ExprNode
 enum BasicType {
-	UNKNOWN, VOID, BOOL, CHAR, INT, U32
+	VOID, BOOL, CHAR, INT, U32, STR,
 };
 
 struct ExpressionType {
 	enum BasicType type;
-	int pointers;
+	unsigned pointers: 31, temporary: 1;
 };
 //
 
 enum AST_ExpressionType {
-	LITERAL    = 0x1,
-	STRING     = 0x2,
-	IDENTIFIER = 0x4,
-	UNARY_OP   = 0x8,
+	LITERAL    = 0x01,
+	STRING     = 0x02,
+	IDENTIFIER = 0x04,
+	UNARY_OP   = 0x08,
 	BINARY_OP  = 0x10,
 	TYPE_CAST  = 0x20,
+	FUNC_CALL  = 0x40,
 };
 
 struct AST_ExprLiteral {
@@ -55,6 +56,13 @@ struct AST_ExprTypeCast {
 	struct AST_Expression *rhs;
 };
 
+struct AST_ExprFuncCall {
+	struct Token *token;
+	struct ExpressionType type;
+	struct AST_Expression *func;
+	struct AST_Expression *args;
+};
+
 struct AST_Expression {
 	enum AST_ExpressionType type;
 
@@ -65,6 +73,7 @@ struct AST_Expression {
 		struct AST_ExprUnaryOp    unary_op;
 		struct AST_ExprBinaryOp   binary_op;
 		struct AST_ExprTypeCast   type_cast;
+		struct AST_ExprFuncCall   func_call;
 	};
 };
 
