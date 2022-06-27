@@ -1,7 +1,7 @@
 unholy-c is an experimental C compiler
 
 **Todo:**
-- [ ] add type inference of expressions
+- [x] add type inference of expressions
 - [ ] add scope to store variables / constants / functions
-- [ ] add type checking for expressions
-- [ ] implement sizeof operator
+- [x] add type checking for expressions
+- [x] implement sizeof operator
