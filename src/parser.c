@@ -9,10 +9,13 @@
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <stddef.h>
+#include <string.h>
 
 void parser_error(struct Parser *parser, struct Token *, const char *fmt, ...) PRINTF(3,4);
+void parser_warning(struct Parser *parser, struct Token *, const char *fmt, ...) PRINTF(3,4);
+
 const char *print_token(struct Token *);
+const char *print_type(struct ExpressionType type, char *);
 
 static inline
 struct Token *peek_next(struct Parser *parser) {
@@ -186,7 +189,6 @@ int sizeof_type(struct ExpressionType type) {
 		case U16:  return 2;
 		case U32:  return 4;
 		case INT:  return 4;
-		case STR: assert(0 && "sizeof string literal should not be checked here!");
 		default: assert(0 && "unreachable");
 	}
 }
@@ -329,8 +331,6 @@ struct AST_Expression *parse_expression_1(struct Parser *parser, int min_precede
 			bool func_call = op->value == '(';
 			bool array_sub = op->value == '[';
 
-			if (array_sub) puts("here!");
-
 			int prec = precedence[op->value];
 			if (func_call || array_sub) prec = MIN_PRECEDENCE;
 
@@ -362,9 +362,13 @@ struct AST_Expression *parse_expression_1(struct Parser *parser, int min_precede
 	return lhs;
 }
 
+static
+struct ExpressionType type_check_expression(struct AST_Expression *expr, struct Parser *parser);
 
 struct AST_Expression *parse_expression(struct Parser *parser) {
-	return parse_expression_1(parser, MIN_PRECEDENCE);
+	struct AST_Expression *expr = parse_expression_1(parser, MIN_PRECEDENCE);
+	if (!parser->errors) type_check_expression(expr, parser);
+	return expr;
 }
 
 
@@ -379,7 +383,9 @@ struct ExpressionType type_check_expression(struct AST_Expression *expr, struct 
 			break;
 
 		case STRING:
-			type.type = STR; // strings are their own compile-time type
+			type.type = U8;
+			type.pointers = 1;
+			type.temporary = true;
 			break;
 
 		case IDENTIFIER:
@@ -405,10 +411,7 @@ struct ExpressionType type_check_expression(struct AST_Expression *expr, struct 
 						parser_error(parser, op.token, "Invalid argument type '%%' to unary expression.");
 					}
 
-					// negation makes value signed by default
-					if (op.token->value == '-') type.type = INT;
-					else type.type = max(rhs.type, U32);
-
+					type.type = max(rhs.type, U32);
 					type.temporary = true;
 					break;
 
@@ -454,48 +457,147 @@ struct ExpressionType type_check_expression(struct AST_Expression *expr, struct 
 			struct ExpressionType rhs = type_check_expression(op.rhs, parser);
 			if (parser->errors) break;
 
-			(void) lhs;
-			(void) rhs;
+			static char lbuff[1024], rbuff[1024];
+			bool shift = false;
 
-			if (op.token->type == KEYWORD_ELSE) {
+			// check binary arguments are not void
+			if ((lhs.pointers == 0 && lhs.type == VOID) ||
+			    (rhs.pointers == 0 && rhs.type == VOID)) {
+				parser_error(parser, op.token,
+					"Unexpected void type of %s of binary operator.",
+					(lhs.pointers == 0 && lhs.type == VOID) ? "lhs" : "rhs"
+				);
 				break;
 			}
 
-			switch (op.token->value) {
+			if (op.token->type == KEYWORD_ELSE) {
+				if ((lhs.pointers > 0) != (rhs.pointers > 0)) {
+					parser_warning(parser, op.token, "Type mismatch in else expression.");
+				}
+
+				type = lhs;
+				type.temporary = true;
+				break;
+			}
+
+			else switch (op.token->value) {
 				case ',':
 					type = rhs;
 					break;
 
 				// logical
 				case OR: case AND:
+					type.type = U8;
+					type.temporary = true;
 					break;
 
-				// bitwise
+				// 'normal' operators
+				case SHL: case SHR:
+					shift = true; // fallthrough
+
 				case '|': case '^': case '&':
+				case '*': case '/': case '%':
+					if (lhs.pointers > 0 || rhs.pointers > 0) {
+						parser_error(parser, op.token,
+							"Invalid operands to binary %s (have "
+							WHITE "'%s'" RESET " and "
+							WHITE "'%s'" RESET ").",
+							print_token(op.token),
+							print_type(lhs, lbuff),
+							print_type(rhs, rbuff)
+						);
+					}
+
+					type.temporary = true;
+					type.type = shift ? max(lhs.type, U32)
+					                  : max(max(lhs.type, rhs.type), U32);
 					break;
 
 				// comparison
 				case EQ: case NEQ:
 				case '<': case LEQ: case '>': case GEQ:
-					break;
+					if (lhs.pointers != rhs.pointers ||
+					    (lhs.pointers > 0 && lhs.type != rhs.type)) {
+						parser_warning(parser, op.token,
+							"Comparison between differing pointer types (have "
+							WHITE "'%s'" RESET " and "
+							WHITE "'%s'" RESET ").",
+							print_type(lhs, lbuff),
+							print_type(rhs, rbuff)
+						);
+					}
 
-				// shift
-				case SHL: case SHR:
+					if (lhs.pointers == 0 && rhs.pointers == 0 && ((lhs.type == INT) != (rhs.type == INT))) {
+						parser_warning(parser, op.token,
+							"Comparison between different signedness (have "
+							WHITE "'%s'" RESET " and "
+							WHITE "'%s'" RESET ").",
+							print_type(lhs, lbuff),
+							print_type(rhs, rbuff)
+						);
+					}
+
+					type.type = U32;
+					type.temporary = true;
 					break;
 
 				// (pointer) arithmetic
 				case '+':
+					if (lhs.pointers > 0 && rhs.pointers > 0) {
+						parser_error(parser, op.token,
+							"Invalid operands to binary %s (have "
+							WHITE "'%s'" RESET " and "
+							WHITE "'%s'" RESET ").",
+							print_token(op.token),
+							print_type(lhs, lbuff),
+							print_type(rhs, rbuff)
+						);
+					}
+
+					     if (lhs.pointers > 0) type = lhs;
+					else if (rhs.pointers > 0) type = rhs;
+					else                       type.type = max(max(lhs.type, rhs.type), U32);
+
+					type.temporary = true;
 					break;
 
 				case '-':
-					break;
+					if (lhs.pointers > 0 && rhs.pointers > 0) {
+						if (lhs.pointers != rhs.pointers || lhs.type != rhs.type) {
+							parser_warning(parser, op.token,
+								"Offset between differing pointer types (have "
+								WHITE "'%s'" RESET " and "
+								WHITE "'%s'" RESET ").",
+								print_type(lhs, lbuff),
+								print_type(rhs, rbuff)
+							);
+						}
 
-				// arithmetic
-				case '*': case '/': case '%':
+						type.type = U32;
+					}
+
+					else if (lhs.pointers > 0) type = lhs;
+					else if (rhs.pointers > 0) type = rhs;
+					else                       type.type = max(max(lhs.type, rhs.type), U32);
+
+					type.temporary = true;
 					break;
 
 				// index
 				case '[':
+					if (lhs.pointers == 0) {
+						parser_error(parser, op.token,
+							"Cannot index into non-pointer type (have "
+							WHITE "'%s'" RESET ").", print_type(lhs, lbuff));
+					}
+
+					if (rhs.pointers > 0) {
+						parser_error(parser, op.token,
+							"Cannot index using a pointer type (have "
+							WHITE "'%s'" RESET ").", print_type(rhs, rbuff));
+					}
+
+
 					break;
 
 				default:
@@ -531,7 +633,7 @@ const char *print_token(struct Token *token) {
 		case PREPROC + 1 ... PREPROC_END - 1:
 			return "preprocessor directive";
 
-		case TOK_EOF: return "EOF";
+		case TOK_EOF: return "end-of-file";
 
 		case KEYWORD:
 		case PREPROC:
@@ -566,6 +668,34 @@ const char *print_token(struct Token *token) {
 }
 
 
+const char *print_type(struct ExpressionType type, char *buffer) {
+	const char *T = NULL;
+	int L = 0;
+
+	switch (type.type) {
+		case VOID: T = "void"; L = 4; break;
+		case U8:   T = "u8";   L = 2; break;
+		case U16:  T = "u16";  L = 3; break;
+		case U32:  T = "u32";  L = 3; break;
+		case INT:  T = "int";  L = 3; break;
+	}
+
+	assert(T && L && "unreachable");
+
+	char *write = buffer;
+	strncpy(write, T, L + 1);
+	write += L;
+
+	if (type.pointers)
+		*write++ = ' ';
+
+	while (type.pointers --> 0)
+		*write++ = '*';
+
+	*write++ = 0;
+	return buffer;
+}
+
 void parser_error(struct Parser *parser, struct Token *token, const char *fmt, ...) {
 	if (token == NULL) token = parser->tokens;
 	printf(WHITE "%s:%d:%d: " RED "error: " RESET, token->filename, token->line, token->col);
@@ -578,4 +708,18 @@ void parser_error(struct Parser *parser, struct Token *token, const char *fmt, .
 
 	putchar('\n');
 	parser->errors++;
+}
+
+
+void parser_warning(struct Parser *parser, struct Token *token, const char *fmt, ...) {
+	if (token == NULL) token = parser->tokens;
+	printf(WHITE "%s:%d:%d: " MAGENTA "warning: " RESET, token->filename, token->line, token->col);
+
+	va_list args;
+	va_start(args, fmt);
+
+	vprintf(fmt, args);
+	va_end(args);
+
+	putchar('\n');
 }

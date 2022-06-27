@@ -1,1 +1,1 @@
-1 + 2 + sizeof (int)
+'a'["hello" != 0]

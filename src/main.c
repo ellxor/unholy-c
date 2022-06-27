@@ -18,7 +18,7 @@ void print_expr(struct AST_Expression *expr, int depth) {
 
 	switch (expr->type) {
 		case LITERAL:
-			printf("%d\n", expr->literal.value);
+			printf("%u\n", expr->literal.value);
 			break;
 
 		case STRING:

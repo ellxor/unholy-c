@@ -3,7 +3,7 @@
 
 // type info for AST_ExprNode
 enum BasicType {
-	VOID, U8, U16, U32, INT, STR,
+	VOID, U8, U16, U32, INT,
 };
 
 struct ExpressionType {
@@ -25,7 +25,7 @@ enum AST_ExpressionType {
 struct AST_ExprLiteral {
 	struct Token *token;
 	struct ExpressionType type;
-	int value;
+	unsigned value;
 };
 
 struct AST_ExprString {
