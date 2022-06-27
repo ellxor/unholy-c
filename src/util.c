@@ -7,7 +7,7 @@
 
 // murmur2 hash function
 unsigned hash(const char *in, int length) {
-	unsigned digest = 0;
+	unsigned digest = length;
 	enum { shuffle = 0x5bd1e995 };
 
 	for (int i = 0; i < length >> 2; i++) {
@@ -24,8 +24,8 @@ unsigned hash(const char *in, int length) {
 	}
 
 	switch (length & 3) {
-		case 3: digest ^= in[2] << 16;
-		case 2: digest ^= in[1] << 8;
+		case 3: digest ^= in[2] << 16; // fallthrough
+		case 2: digest ^= in[1] << 8;  // fallthrough
 		case 1: digest ^= in[0];
 		        digest *= shuffle;
 	}

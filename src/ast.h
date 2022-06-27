@@ -3,7 +3,7 @@
 
 // type info for AST_ExprNode
 enum BasicType {
-	VOID, BOOL, CHAR, INT, U32, STR,
+	VOID, U8, U16, U32, INT, STR,
 };
 
 struct ExpressionType {

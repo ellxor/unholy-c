@@ -117,8 +117,8 @@ enum AST_ExpressionType get_token_type(struct Token *token) {
 		case KEYWORD_SIZEOF: return UNARY_OP;
 		case KEYWORD_ELSE:   return BINARY_OP;
 
-		case KEYWORD_VOID: case KEYWORD_BOOL: case KEYWORD_CHAR:
-		case KEYWORD_INT:  case KEYWORD_U32:
+		case KEYWORD_VOID: case KEYWORD_INT:
+		case KEYWORD_U8: case KEYWORD_U16: case KEYWORD_U32:
 			return TYPE;
 
 		case PUNCTUATION: switch (token->value) {
@@ -159,11 +159,11 @@ struct ExpressionType parse_type(struct Parser *parser) {
 
 	switch (basic_type->type) {
 		case KEYWORD_VOID: type.type = VOID; break;
-		case KEYWORD_BOOL: type.type = BOOL; break;
-		case KEYWORD_CHAR: type.type = CHAR; break;
 		case KEYWORD_INT:  type.type = INT;  break;
+		case KEYWORD_U8:   type.type = U8;   break;
+		case KEYWORD_U16:  type.type = U16;  break;
 		case KEYWORD_U32:  type.type = U32;  break;
-		default: assert(0 && "unreachabel");
+		default: assert(0 && "unreachable");
 	}
 
 	while (peek_next(parser) && peek_next(parser)->type == PUNCTUATION
@@ -182,11 +182,12 @@ int sizeof_type(struct ExpressionType type) {
 
 	switch (type.type) {
 		case VOID: return 0;
-		case BOOL: return 1;
-		case CHAR: return 1;
-		case INT:  return 4;
+		case U8:   return 1;
+		case U16:  return 2;
 		case U32:  return 4;
-		case STR:  assert(0 && "unreachable");
+		case INT:  return 4;
+		case STR: assert(0 && "sizeof string literal should not be checked here!");
+		default: assert(0 && "unreachable");
 	}
 }
 
@@ -374,8 +375,7 @@ struct ExpressionType type_check_expression(struct AST_Expression *expr, struct 
 	switch (expr->type) {
 		case LITERAL:
 			type.temporary = true;
-			if (expr->literal.token->is_char) type.type = CHAR;
-			else type.type = (expr->literal.value <= INT_MAX) ? INT: U32;
+			type.type = (expr->literal.token->is_char) ? U8 : U32;
 			break;
 
 		case STRING:
@@ -405,7 +405,10 @@ struct ExpressionType type_check_expression(struct AST_Expression *expr, struct 
 						parser_error(parser, op.token, "Invalid argument type '%%' to unary expression.");
 					}
 
-					type.type = INT;
+					// negation makes value signed by default
+					if (op.token->value == '-') type.type = INT;
+					else type.type = max(rhs.type, U32);
+
 					type.temporary = true;
 					break;
 
@@ -421,7 +424,7 @@ struct ExpressionType type_check_expression(struct AST_Expression *expr, struct 
 
 				case '*':
 					if (rhs.temporary || rhs.type == VOID) {
-						parser_error(parser, op.token, "Expression has no address.");
+						parser_error(parser, op.token, "Cannot reference temporary expression.");
 					}
 
 					type = rhs;
@@ -450,6 +453,9 @@ struct ExpressionType type_check_expression(struct AST_Expression *expr, struct 
 			struct ExpressionType lhs = type_check_expression(op.lhs, parser);
 			struct ExpressionType rhs = type_check_expression(op.rhs, parser);
 			if (parser->errors) break;
+
+			(void) lhs;
+			(void) rhs;
 
 			if (op.token->type == KEYWORD_ELSE) {
 				break;
