@@ -417,7 +417,10 @@ struct ExpressionType type_check_expression(struct AST_Expression *expr, struct 
 						);
 					}
 
-					type.type = max(rhs.type, U32);
+					// '+' and '-' always makes value signed
+					if (op.token->value != '~') type.type = INT;
+					else                        type.type = max(rhs.type, U32);
+
 					type.temporary = true;
 					break;
 
@@ -469,8 +472,12 @@ struct ExpressionType type_check_expression(struct AST_Expression *expr, struct 
 			if ((lhs.pointers == 0 && lhs.type == VOID) ||
 			    (rhs.pointers == 0 && rhs.type == VOID)) {
 				parser_error(parser, op.token,
-					"Unexpected void type of %s of binary operator.",
-					(lhs.pointers == 0 && lhs.type == VOID) ? "lhs" : "rhs"
+					"Invalid operands to binary %s (have "
+					WHITE "'%s'" RESET " and "
+					WHITE "'%s'" RESET ").",
+					print_token(op.token),
+					print_type(lhs, lbuff),
+					print_type(rhs, rbuff)
 				);
 				break;
 			}
