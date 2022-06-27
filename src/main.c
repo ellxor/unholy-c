@@ -6,6 +6,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "tokens.h"
+#include "util.h"
 
 void print_expr(struct AST_Expression *expr, int depth) {
 	if (expr == NULL) {
@@ -49,7 +50,10 @@ void print_expr(struct AST_Expression *expr, int depth) {
 	}
 }
 
-int main() {
+int main(int argc, char **argv) {
+	set_program(argv[0]);
+	assert(argc >= 1);
+
 	struct Vec tokens = vec(struct Token);
 	struct Allocator allocator = init_allocator();
 
