@@ -375,6 +375,7 @@ struct AST_Expression *parse_expression(struct Parser *parser) {
 static
 struct ExpressionType type_check_expression(struct AST_Expression *expr, struct Parser *parser) {
 	struct ExpressionType type = {0};
+	static char lbuff[1024], rbuff[1024];
 
 	switch (expr->type) {
 		case LITERAL:
@@ -408,7 +409,12 @@ struct ExpressionType type_check_expression(struct AST_Expression *expr, struct 
 			switch (op.token->value) {
 				case '+': case '-': case '~':
 					if (rhs.pointers > 0 || rhs.type == VOID) {
-						parser_error(parser, op.token, "Invalid argument type '%%' to unary expression.");
+						parser_error(parser, op.token,
+							"Invalid operand to unary %s (have "
+							WHITE "'%s'" RESET ").",
+							print_token(op.token),
+							print_type(rhs, lbuff)
+						);
 					}
 
 					type.type = max(rhs.type, U32);
@@ -418,7 +424,7 @@ struct ExpressionType type_check_expression(struct AST_Expression *expr, struct 
 				case INC: case DEC:
 				case POST_INC: case POST_DEC:
 					if (rhs.temporary) {
-						parser_error(parser, op.token, "Expression is not assignable.");
+						parser_error(parser, op.token, "Cannot assign to temporary expression.");
 					}
 
 					type = rhs;
@@ -457,7 +463,6 @@ struct ExpressionType type_check_expression(struct AST_Expression *expr, struct 
 			struct ExpressionType rhs = type_check_expression(op.rhs, parser);
 			if (parser->errors) break;
 
-			static char lbuff[1024], rbuff[1024];
 			bool shift = false;
 
 			// check binary arguments are not void
@@ -607,9 +612,33 @@ struct ExpressionType type_check_expression(struct AST_Expression *expr, struct 
 			break;
 		}
 
-		case TYPE_CAST:
-			errx("type casts are not supported yet!");
+		case TYPE_CAST: {
+			struct AST_ExprTypeCast cast = expr->type_cast;
+			struct ExpressionType rhs = type_check_expression(cast.rhs, parser);
+			if (parser->errors) break;
+
+			if (rhs.type == VOID && rhs.pointers == 0) {
+				if (cast.type.type != VOID || cast.type.pointers > 0) {
+					parser_error(parser, cast.token,
+						"Cannot cast expression of type 'void' to '%s'",
+						print_type(cast.type, lbuff)
+					);
+				}
+			}
+
+			if (cast.type.type == rhs.type && cast.type.pointers == rhs.pointers) {
+				parser_warning(parser, cast.token,
+					"Unnecessary cast of identical types ("
+					WHITE "'%s'" RESET " to "
+					WHITE "'%s'" RESET ").",
+					print_type(rhs, rbuff),
+					print_type(cast.type, lbuff));
+			}
+
+			type = cast.type;
+			type.temporary = true;
 			break;
+		}
 
 		case FUNC_CALL:
 			errx("function calls are not supported yet!");
